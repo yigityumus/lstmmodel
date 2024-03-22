@@ -1,6 +1,8 @@
 import sqlite3
 import json
 
+# TODO - Write some tests for the code.
+
 # Connect to SQLite database
 conn = sqlite3.connect('example.db')
 c = conn.cursor()
