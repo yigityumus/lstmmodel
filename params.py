@@ -4,10 +4,10 @@ TIME_STEPS = [6, 24, 72, 168]
 NEURONS = [25, 50, 100]
 DROPOUT_RATES = [0.2] # 0.1, 0.3
 OPTIMIZERS = ['adam', 'rmsprop']
-PATIENCES = [7, 10] # 13
+PATIENCES = [7] # 13
 EPOCHS = [50, 100, 150]
-BATCH_SIZES = [10, 25]
-ACTIVATIONS = ['tanh'] # sigmoid
+BATCH_SIZES = [25]
+ACTIVATIONS = ['sigmoid'] # sigmoid
 KERNEL_REGULARIZERS = [0.01]
 LOSS_FUNCTIONS = ['mean_absolute_error', 'mean_squared_error'] # 'huber_loss', 'logcosh'
 

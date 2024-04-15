@@ -33,6 +33,7 @@ class LSTMDatabase:
         Parameters:
         - Various parameters related to model configuration and training.
         """
+        table_name = "LSTM_model"
 
         # TODO - Add training and validation loss for the future models
         # # Serialize lists into JSON strings
@@ -47,17 +48,17 @@ class LSTMDatabase:
         # TODO - Create a database class
 
         # Connect to SQLite database
-        conn = sqlite3.connect('model_data.db')
+        conn = sqlite3.connect('LSTM.db')
         c = conn.cursor()
 
         # FIXME - The code is way too complicated. Make it much more simpler. Hint: BaseModel or things like it.
         # Create a table to store model data if it doesn't exist
-        c.execute('''CREATE TABLE IF NOT EXISTS model_data
+        c.execute('''CREATE TABLE IF NOT EXISTS LSTM_model
              (id INTEGER PRIMARY KEY, {}, {})'''.format(', '.join([f'{key} {value}' for key, value in self.params_column_types.items()]), ', '.join([f'{key} {value}' for key, value in self.other_column_types.items()])))
 
         # FIXME - Move this code to the Database class once you create it.
         # Insert data into the database
-        c.execute("INSERT INTO model_data (train_rate, time_step, neuron, dropout_rate, optimizer, patience, epoch, batch_size, activation, kernel_regularizer, loss_function, test_loss, close_data, train_predict, test_predict, predictions) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        c.execute("INSERT INTO LSTM_model (train_rate, time_step, neuron, dropout_rate, optimizer, patience, epoch, batch_size, activation, kernel_regularizer, loss_function, test_loss, close_data, train_predict, test_predict, predictions) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
           tuple(params[key] for key in self.params_column_types.keys()) + (test_loss, close_data_json, train_predict_json, test_predict_json, predictions_json))
 
 
