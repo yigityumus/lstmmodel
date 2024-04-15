@@ -1,137 +1,286 @@
 import os
 import json
-import matplotlib.pyplot as plt
 from datetime import datetime
-
-
-# TODO - Remove this file once you complete the other TODOs
+from typing import List, Tuple
+from keras.src.callbacks import History
+import pandas as pd
+import itertools
+import matplotlib.pyplot as plt
 
 
 class LSTMModelHelper:
-    def __init__(self, database_name: str):
+    def __init__(self, database_name: str, parameter_list: dict):
         self.db = database_name
+        self.params_list = parameter_list
 
-    def training_validation_loss_plot(self, history, params, current_time):
+
+    def get_current_time() -> str:
         """
-        Plots training and validation loss.
+        Takes no parameters and returns current time in `%Y-%m-%d %H-%M-%S` format.
+        """
+
+        try:
+            return datetime.now().strftime("%Y-%m-%d %H-%M-%S")
+        except Exception as e:
+            print("An error occurred when calculating current time: ", e)
+            return None
+    
+
+    def calculate_times(start_time: int, end_time: int) -> dict:
+        """
+        Calculate various time-related values based on start and end timestamps.
 
         Parameters:
-        - history: Training history object containing loss and validation loss.
-        - params: Model parameters.
-        - current_time: Current timestamp.
+        - start_time (int): Start timestamp.
+        - end_time (int): End timestamp.
+
+        Returns:
+        - dict: Dictionary containing calculated time values.
         """
-        loss = history.history['loss']
-        val_loss = history.history['val_loss']
-        epochs = range(len(loss))
+        assert isinstance(start_time, int), "start_time must be an integer."
+        assert isinstance(end_time, int), "end_time must be an integer."
+
+        try:
+            # Convert timestamps to datetime objects
+            start_date = datetime.utcfromtimestamp(start_time).strftime('%Y-%m-%d %H:%M:%S')
+            end_date = datetime.utcfromtimestamp(end_time).strftime('%Y-%m-%d %H:%M:%S')
+        except Exception as e:
+            print("An error occurred when converting timestamps to dates: ", e)
+            return None
+
+        try:
+            # Calculate total time in seconds
+            total_time = end_time - start_time
+        except Exception as e:
+            print("An error occurred when calculating total time: ", e)
+            return None
+
+        return {
+            'start_timestamp': start_time,
+            'end_timestamp': end_time,
+            'total_time': total_time,
+            'start_date': start_date,
+            'end_date': end_date
+        }
         
-        plt.figure(figsize=(12, 6))
-        plt.plot(epochs, loss, 'r', label='Training loss')
-        plt.plot(epochs, val_loss, 'b', label='Validation loss')
-        plt.title(f'Training and validation loss for: {params} (date: {current_time})')
-        plt.legend(loc=0)
-        self.save_plot(params, 'tra_val_loss', current_time)
 
-    def close_and_predictions_plot(self, df, close_data, train_date, train_predict, test_date, test_predict, params):
+    def param_combinations(self) -> list:
         """
-        Plots close values and predictions.
+        Generates all combinations of parameters
+        """
+        try:
+            return list(itertools.product(*self.params_list.values()))
+        except Exception as e:
+            print("An error occurred when generating combinations: ", e)
+            return None
+    
+    
+    def params_to_dict(self) -> List[dict]:
+        """
+        Returns parameter combinations as list of dict.
+        """
+        try:
+            return [{key: value for key, value in zip(self.params_list.keys(), param)} for param in self.param_combinations(self.params_list)]
+        except Exception as e:
+            print("An error occurred when converting params tuples to dicts: ", e)
+            return None
+    
+
+    def params_tuple_to_dict(self, params: tuple) -> dict:
+        """
+        Convert a single params tuple to a dictionary using parameter names as keys.
 
         Parameters:
-        - df: DataFrame containing date and close data.
-        - close_data: Original close data.
-        - train_date: Dates for training data.
-        - train_predict: Predictions for training data.
-        - test_date: Dates for test data.
-        - test_predict: Predictions for test data.
-        - params: Model parameters.
+        - params (tuple): The tuple to be converted.
         """
-        plt.figure(figsize=(12, 6))
-        plt.plot(df['date'], close_data, label='Original Close')
-        plt.plot(train_date, train_predict[:,-1], label='Training Predictions')
-        plt.plot(test_date, test_predict[:,-1], label='Test Predictions')
-        plt.xlabel('Time')
-        plt.ylabel('Close Value')
-        plt.title(f'Close Values vs. Predictions {params}')
-        plt.legend()
-        self.save_plot(params, 'close_training_test', '')
+        assert isinstance(params, tuple), 'params must be a tuple.'
 
-    def future_plot(self, future_dates, predictions, params, current_time):
+        try:
+            return {key: value for key, value in zip(self.params_list.keys(), params)}
+        except Exception as e:
+            print("An error occurred when converting params tuple to dict: ", e)
+            return None
+    
+
+    def training_data_tuple_to_dict(self, training_data: tuple) -> dict:
         """
-        Plots future price predictions.
+        Convert a single training_data tuple to a dictionary using parameter names as keys.
 
         Parameters:
-        - future_dates: Dates for future predictions.
-        - predictions: Future price predictions.
-        - params: Model parameters.
-        - current_time: Current timestamp.
+        - training_data (tuple): The tuple to be converted.
         """
-        plt.figure(figsize=(12, 6))
-        plt.plot(future_dates, predictions, label='Predictions')
-        plt.xlabel('Date')
-        plt.ylabel('Price')
-        plt.title(f'Future Price Predictions {params} ({current_time})')
-        plt.legend()
-        self.save_plot(params, 'future_predictions', current_time)
+        assert isinstance(training_data, tuple), 'training_data must be a tuple.'
 
-    def save_plot(self, params, plot_type, current_time):
+        try:
+            return {key: value for key, value in zip(self.training_data_list.keys(), training_data)}
+        except Exception as e:
+            print("An error occurred when converting tarining_data tuple to dict: ", e)
+            return None
+    
+
+    def create_folder(folder_name: str, target_path: str = '/Volumes/DATA/LSTM/') -> None:
         """
-        Saves the current plot.
+        Create a folder in the specified path.
 
         Parameters:
-        - params: Model parameters.
-        - plot_type: Type of plot being saved.
-        - current_time: Current timestamp.
+        - folder_name (str): Name of the folder to be created.
+        - target_path (str): Path of the folder to be created.
         """
-        folder_name = f'images/{plot_type}'
-        if not os.path.exists(folder_name):
-            os.makedirs(folder_name)
-        plt.savefig(f'{folder_name}/{plot_type}_{params}_{current_time}.png')
-        plt.close()
+        assert isinstance(folder_name, str), 'folder_name must be a string.'
+        assert isinstance(target_path, str), 'target_path must be a string.'
 
-    def save_data(self, train_rate, time_step, neuron, dropout_rate, optimizer, patience, epoch, batch_size, activation, kernel_regularizer, loss_function, history, test_loss, close_data, train_predict, test_predict, predictions, params):
+        try:
+            # Combine the target path with the provided folder name
+            folder_path = os.path.join(target_path, target_path)
+
+            # Create the folder if it doesn't exist
+            if not os.path.exists(folder_path):
+                os.makedirs(folder_path)
+                print(f"Folder '{folder_name}' created successfully at: {folder_path}")
+            else:
+                print(f"Folder '{folder_name}' already exists at: {folder_path}")
+        except Exception as e:
+            print(f"An error occurred when creating '{folder_name}' folder in {target_path} path: ", e)
+
+
+    def training_validation_loss_plot(self, training_loss: List[float], validation_loss: List[float], params: Tuple) -> None:
+        """
+        Plot training and validation loss.
+
+        Parameters:
+        - training_loss (List[float]): List of training loss values.
+        - validation_loss (List[float]): List of validation loss values.
+        - params (tuple): tuple that contains model parameters.
+        """
+        assert isinstance(training_loss, list), 'training_loss must be a list.'
+        assert isinstance(validation_loss, list), 'validation_loss must be a list.'
+        assert isinstance(params, tuple), 'params must be a tuple.'
+        assert len(training_loss) == len(validation_loss), 'Lengths of training_loss and validation_loss must be the same.'
+
+        try:        
+            plt.figure(figsize=(12, 6))
+            plt.plot(len(training_loss), training_loss, 'r', label='Training loss')
+            plt.plot(len(training_loss), validation_loss, 'b', label='Validation loss')
+            plt.title(f'Training and validation loss for: {params} (date: {self.get_current_time()})')
+            plt.legend(loc=0)
+            self.save_image('tra_val_loss', params)
+            plt.close()
+        except Exception as e:
+            print("An error occurred when creating training and validation plot: ", e)
+
+
+    def close_and_predictions_plot(self, df: pd.DataFrame, close_data: List[float], train_date: List[str], 
+                               train_predict: List[float], test_date: List[str], test_predict: List[float], 
+                               params: Tuple) -> None:
+        """
+        Plot close values and predictions.
+
+        Parameters:
+        - df (pandas.DataFrame): DataFrame containing date and close data.
+        - close_data (List[float]): Original close data.
+        - train_date (List[str]): Dates for training data.
+        - train_predict (List[float]): Predictions for training data.
+        - test_date (List[str]): Dates for test data.
+        - test_predict (List[float]): Predictions for test data.
+        - params (tuple): Model parameters.
+        """
+        assert isinstance(df, pd.DataFrame), 'df must be a dictionary.'
+        assert isinstance(close_data, list), 'close_data must be a list.'
+        assert isinstance(train_date, list), 'train_date must be a list.'
+        assert isinstance(train_predict, list), 'train_predict must be a list.'
+        assert isinstance(test_date, list), 'test_date must be a list.'
+        assert isinstance(test_predict, list), 'test_predict must be a list.'
+        assert isinstance(params, str), 'params must be a string.'
+
+        try:
+            plt.figure(figsize=(12, 6))
+            plt.plot(df['date'], close_data, label='Original Close')
+            plt.plot(train_date, train_predict[:,-1], label='Training Predictions')
+            plt.plot(test_date, test_predict[:,-1], label='Test Predictions')
+            plt.xlabel('Time')
+            plt.ylabel('Close Value')
+            plt.title(f'Close Values vs. Predictions {params}')
+            plt.legend()
+            self.save_image('close_and_predictions', params)
+            plt.close()
+        except Exception as e:
+            print("An error occurred when creating close and predictions plot: ", e)
+
+
+    def future_plot(self, future_dates: List[str], predictions: List[float], params: Tuple) -> None:
+        """
+        Plot future price predictions.
+
+        Parameters:
+        - future_dates (List[str]): Dates for future predictions.
+        - predictions (List[float]): Future price predictions.
+        - params (tuple): Model parameters.
+        """
+        assert isinstance(future_dates, list), "future_dates must be a list."
+        assert isinstance(predictions, list), "predictions must be a list."
+        assert isinstance(params, tuple), "params must be a tuple."
+
+        try:
+            plt.figure(figsize=(12, 6))
+            plt.plot(future_dates, predictions, label='Predictions')
+            plt.xlabel('Date')
+            plt.ylabel('Price')
+            plt.title(f'Future Price Predictions {params} ({self.get_current_time()})')
+            plt.legend()
+            self.save_image('future_predictions', params)
+            plt.close()
+        except Exception as e:
+            print("An error occurred when creating future predictions plot: ", e)
+
+
+    def save_image(self, folder_name: str, params: Tuple) -> None:
+        """
+        Save the current plot as an image.
+
+        Parameters:
+        - folder_name (str): Name of the folder where the image will be saved.
+        - params (tuple): Tuple containing parameters used for the plot.
+        """
+
+        assert isinstance(folder_name, tuple), "folder_name must be str."
+        assert isinstance(params, tuple), "params must be a tuple."
+
+        try:
+            self.create_folder(f'images/{folder_name}')
+            plt.savefig(f'images/{folder_name}/{folder_name}_{params}.png')
+        except Exception as e:
+            print(f"An error occurred when saving the {folder_name} plot: {str(e)}")
+
+
+    def save_data(self, times: dict, history: History, test_loss: list, close_data: list, train_predict: list, test_predict: list, predictions: list, params: dict, table_name: str):
         """
         Saves model data to the database.
 
         Parameters:
         - Various parameters related to model configuration and training.
         """
-        current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
+        # FIXME - times comes from function way above.
         # Save model data to the database
-        table_name = 'model_data'
-        params = {
-            'train_rate': train_rate,
-            'time_step': time_step,
-            'neuron': neuron,
-            'dropout_rate': dropout_rate,
-            'optimizer': optimizer,
-            'patience': patience,
-            'epoch': epoch,
-            'batch_size': batch_size,
-            'activation': activation,
-            'kernel_regularizer': kernel_regularizer,
-            'loss_function': loss_function,
-        }
+        params_dict = self.params_tuple_to_dict(params)
         training_data = {
-            'epoch_used': epoch,
-            'start_timestamp': int(history.epoch[0]),
-            'finish_timestamp': int(history.epoch[-1]),
-            'total_time': int(history.epoch[-1] - history.epoch[0]),
-            'start_date': history.epoch[0],
-            'finish_date': history.epoch[-1],
+            'start_timestamp': times['start_timestamp'],
+            'end_timestamp': times['end_timestamp'],
+            'total_time': times['total_time'],
+            'start_date': times['start_date'],
+            'end_date': times['end_date'],
+
             'test_loss': test_loss,
+
+            'epoch_used': len(history.history['loss']),
             'training_loss': json.dumps(history.history['loss']),
             'validation_loss': json.dumps(history.history['val_loss']),
+            
             'close_data': json.dumps([item for sublist in close_data.values.tolist() for item in sublist]),
             'train_predict': json.dumps(train_predict.tolist()),
             'test_predict': json.dumps(test_predict.tolist()),
             'predictions': json.dumps([item for sublist in predictions.tolist() for item in sublist])
         }
 
-        self.db.save_data(params, training_data, table_name)
+        self.db.save_data(params_dict, training_data, table_name)
 
-# Example usage:
-# lstm_helper = LSTMModelHelper()
-# lstm_helper.training_validation_loss_plot(history, params, current_time)
-# lstm_helper.close_and_predictions_plot(df, close_data, train_date, train_predict, test_date, test_predict, params)
-# lstm_helper.future_plot(future_dates, predictions, params, current_time)
-# lstm_helper.save_data(train_rate, time_step, neuron, dropout_rate, optimizer, patience, epoch, batch_size, activation, kernel_regularizer, loss_function, test_loss, close_data, train_predict, test_predict, predictions, params)

@@ -2,13 +2,12 @@ import itertools
 from datetime import datetime
 import os
 import numpy as np
-from keras.src.callbacks import History
-import matplotlib.pyplot as plt
-import pandas as pd
+# import matplotlib.pyplot as plt
+# import pandas as pd
 from typing import List, Tuple
 
 # Define parameter lists
-parameter_lists = {
+parameter_list = {
     'train_rate': [0.75],  # 0.7, 0.8
     'time_step': [6, 24, 72, 168],
     'neuron': [25, 50, 100],
@@ -23,16 +22,46 @@ parameter_lists = {
 }
 
 # Generate all combinations of parameters
-param_combinations = list(itertools.product(*parameter_lists.values()))
+param_combinations = list(itertools.product(*parameter_list.values()))
 
-def params_to_dict(param_combinations: List[tuple]) -> List[dict]:
+def params_to_dict(param_combinations: List[tuple], parameter_list: dict) -> List[dict]:
+    """
+    Convert parameter combinations from tuples to dictionaries.
+
+    Parameters:
+    - param_combinations (List[tuple]): List of parameter combinations as tuples.
+    - parameter_list (dict): Dictionary containing parameter names and their corresponding values.
+    """
     assert isinstance(param_combinations, list), 'param_combinations must be a list.'
+    assert isinstance(parameter_list, dict), 'parameter_list must be a dict.'
 
     try:
-        return [{key: value for key, value in zip(parameter_lists.keys(), param)} for param in param_combinations]
+        return [{key: value for key, value in zip(parameter_list.keys(), param)} for param in param_combinations[0]]
     except Exception as e:
         print("An error occurred when converting params tuples to dicts: ", e)
         return None
+
+
+def tuple_to_dict(single_tuple: tuple, parameter_list: dict) -> dict:
+    """
+    Convert a single tuple to a dictionary using parameter names as keys.
+
+    Parameters:
+    - single_tuple (tuple): The tuple to be converted.
+    - parameter_list (dict): Dictionary containing parameter names and their corresponding values.
+
+    Returns:
+    - dict: The converted dictionary.
+    """
+    assert isinstance(single_tuple, tuple), 'single_tuple must be a tuple.'
+    assert isinstance(parameter_list, dict), 'parameter_list must be a dict.'
+
+    try:
+        return {key: value for key, value in zip(parameter_list.keys(), single_tuple)}
+    except Exception as e:
+        print("An error occurred when converting tuple to dict: ", e)
+        return None
+
 
 def get_current_time() -> str:
     try:
@@ -42,16 +71,21 @@ def get_current_time() -> str:
         return None
 
 
-def create_folder(folder_name: str) -> None:
+def create_folder(folder_name: str, target_path: str = '/Volumes/DATA/LSTM/') -> None:
+    """
+    Create a folder in the specified path.
+
+    Parameters:
+    - folder_name (str): Name of the folder to be created.
+    - target_path (str): Path of the folder to be created.
+    """
     assert isinstance(folder_name, str), 'folder_name must be a string.'
+    assert isinstance(target_path, str), 'target_path must be a string.'
 
     try:
-        # Get the current directory
-        current_directory = os.getcwd()
-        
-        # Combine the current directory path with the provided folder name
-        folder_path = os.path.join(current_directory, folder_name)
-        
+        # Combine the target path with the provided folder name
+        folder_path = os.path.join(target_path, target_path)
+
         # Create the folder if it doesn't exist
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
@@ -59,7 +93,7 @@ def create_folder(folder_name: str) -> None:
         else:
             print(f"Folder '{folder_name}' already exists at: {folder_path}")
     except Exception as e:
-        print(f"An error occurred when creating '{folder_name}' folder: ", e)
+        print(f"An error occurred when creating '{folder_name}' folder in {target_path} path: ", e)
 
 
 
@@ -132,7 +166,7 @@ def create_dataset(dataset: np.ndarray, time_step: int) -> tuple[np.ndarray, np.
         return None, None
 
 
-def training_validation_plot(training_loss: List[float], validation_loss: List[float], params: Tuple) -> None:
+def training_validation_loss_plot(training_loss: List[float], validation_loss: List[float], params: Tuple) -> None:
     """
     Plot training and validation loss.
 
@@ -146,19 +180,13 @@ def training_validation_plot(training_loss: List[float], validation_loss: List[f
     assert isinstance(params, tuple), 'params must be a tuple.'
     assert len(training_loss) == len(validation_loss), 'Lengths of training_loss and validation_loss must be the same.'
 
-    try:
-        epochs = range(len(training_loss))
-        
+    try:        
         plt.figure(figsize=(12, 6))
-        plt.plot(epochs, training_loss, 'r', label='Training loss')
-        plt.plot(epochs, validation_loss, 'b', label='Validation loss')
+        plt.plot(len(training_loss), training_loss, 'r', label='Training loss')
+        plt.plot(len(training_loss), validation_loss, 'b', label='Validation loss')
         plt.title(f'Training and validation loss for: {params} (date: {get_current_time()})')
         plt.legend(loc=0)
-
-        folder_name = 'images/training_val'
-        create_folder(folder_name)
-
-        plt.savefig(f'{folder_name}/tra_val_loss_{params}.png') 
+        save_image('tra_val_loss', params)
         plt.close()
     except Exception as e:
         print("An error occurred when creating training and validation plot: ", e)
@@ -171,7 +199,7 @@ def close_and_predictions_plot(df: pd.DataFrame, close_data: List[float], train_
     Plot close values and predictions.
 
     Parameters:
-    - df (dict): DataFrame containing date and close data.
+    - df (pandas.DataFrame): DataFrame containing date and close data.
     - close_data (List[float]): Original close data.
     - train_date (List[str]): Dates for training data.
     - train_predict (List[float]): Predictions for training data.
@@ -196,14 +224,11 @@ def close_and_predictions_plot(df: pd.DataFrame, close_data: List[float], train_
         plt.ylabel('Close Value')
         plt.title(f'Close Values vs. Predictions {params}')
         plt.legend()
-
-        folder_name = 'images/close_and_predictions'
-        create_folder(folder_name)
-
-        plt.savefig(f'{folder_name}/close_and_predictions_{params}.png')
+        save_image('close_and_predictions', params)
         plt.close()
     except Exception as e:
         print("An error occurred when creating close and predictions plot: ", e)
+
 
 def future_plot(future_dates: List[str], predictions: List[float], params: Tuple) -> None:
     """
@@ -225,11 +250,26 @@ def future_plot(future_dates: List[str], predictions: List[float], params: Tuple
         plt.ylabel('Price')
         plt.title(f'Future Price Predictions {params} ({get_current_time()})')
         plt.legend()
-        
-        folder_name = 'images/future_predictions'
-        create_folder(folder_name)
-
-        plt.savefig(f'{folder_name}/future_predictions_{params}.png')
+        save_image('future_predictions', params)
         plt.close()
     except Exception as e:
         print("An error occurred when creating future predictions plot: ", e)
+
+
+def save_image(folder_name: str, params: Tuple) -> None:
+    """
+    Save the current plot as an image.
+
+    Parameters:
+    - folder_name (str): Name of the folder where the image will be saved.
+    - params (tuple): Tuple containing parameters used for the plot.
+    """
+
+    assert isinstance(folder_name, tuple), "folder_name must be str."
+    assert isinstance(params, tuple), "params must be a tuple."
+
+    try:
+        create_folder(f'images/{folder_name}')
+        plt.savefig(f'images/{folder_name}/{folder_name}_{params}.png')
+    except Exception as e:
+        print(f"An error occurred when saving the {folder_name} plot: {str(e)}")

@@ -43,7 +43,8 @@ class LSTMDatabase:
         except Exception as e:
             print(f"Error occurred during initialization: {str(e)}")
 
-    def create_table(self, table_name: str):
+
+    def create_table(self, table_name: str) -> None:
         """
         Create a table in the database.
 
@@ -71,7 +72,8 @@ class LSTMDatabase:
         except Exception as e:
             print(f"Error occurred during table creation: {str(e)}")
 
-    def insert_data(self, params: dict, training_data: dict, table_name: str):
+
+    def insert_data(self, params: dict, training_data: dict, table_name: str) -> None:
         """
         Insert data into the table.
 
@@ -102,7 +104,8 @@ class LSTMDatabase:
         except Exception as e:
             print(f"Error occurred during data insertion: {str(e)}")
 
-    def save_data(self, params: dict, training_data: dict, table_name: str):
+
+    def save_data(self, params: dict, training_data: dict, table_name: str) -> None:
         """
         Create table (if not exists) and insert data into it.
 
