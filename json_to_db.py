@@ -7,11 +7,32 @@ from datetime import datetime
 # Function to read JSON files from a folder
 def read_json_files_from_folder(folder_path):
     json_files = []
-    for file_name in os.listdir(folder_path):
-        if file_name.endswith('.json') and 'sigmoid' in file_name:
+    for file_name in sorted(os.listdir(folder_path)):
+        if not file_name.startswith('._') and file_name.endswith('.json'):
             file_path = os.path.join(folder_path, file_name)
             json_files.append(file_path)
     return json_files
+
+
+def find_duplicate_filenames(folder_path):
+    filename_count = {}
+    duplicate_filenames = []
+
+    # Iterate through all files in the folder
+    for filename in os.listdir(folder_path):
+        # Get the full path of the file
+        file_path = os.path.join(folder_path, filename)
+        
+        # Check if it's a file (not a directory)
+        if os.path.isfile(file_path):
+            # Count occurrences of the filename
+            filename_count[filename] = filename_count.get(filename, 0) + 1
+            
+            # If the filename appears more than once, add it to duplicate_filenames
+            if filename_count[filename] > 1 and filename not in duplicate_filenames:
+                duplicate_filenames.append(filename)
+    
+    return duplicate_filenames
 
 
 def read_json_file(file_path):
@@ -51,11 +72,9 @@ def read_from_text_file(file_path):
     return data
 
 
-def save_to_database(json_data, text_data, db_file):
+def save_to_database(json_data, text_data, db_file, table_name):
     conn = sqlite3.connect(db_file)
     cursor = conn.cursor()
-
-    table_name = "LSTM_models"
     
     # Create table with auto-incrementing ID
     cursor.execute('''CREATE TABLE IF NOT EXISTS {} (
@@ -134,14 +153,25 @@ def save_to_database(json_data, text_data, db_file):
 if __name__ == '__main__':
     # Example usage
     folder_path = '/Volumes/DATA/LSTM/model_data_files'
-    text_file_path = '/Volumes/DATA/LSTM/sigmoid.txt'
+    text_file_path = '/Volumes/DATA/LSTM/times_and_epochs.txt'
     db_name = "/Volumes/DATA/LSTM/LSTM.db"
+    table_name = 'LSTM_ETHUSDT_1H_FUTURES'
     
     text_data = read_from_text_file(text_file_path)
     print("text data has been successfully handled.")
+    print(f"length of text file: {len(text_data)}")
 
     json_files = read_json_files_from_folder(folder_path)
     print('json files has been successfully handled')
+    print(f"length of json folder: {len(json_files)}")
+
+    duplicates = find_duplicate_filenames(folder_path)
+    if duplicates:
+        print("Duplicate filenames found:")
+        for filename in duplicates:
+            print(filename)
+    else:
+        print("No duplicate filenames found.")
 
     print("starting to save to the database")
-    save_to_database(json_files, text_data, db_name)
+    save_to_database(json_files, text_data, db_name, table_name)

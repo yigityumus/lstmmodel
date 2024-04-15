@@ -1,90 +1,118 @@
 import sqlite3
-import json
-
 
 class LSTMDatabase:
-    def __init__(self):
-        self.params_column_types = {
-            'train_rate': 'REAL',
-            'time_step': 'INTEGER',
-            'neuron': 'INTEGER',
-            'dropout_rate': 'REAL',
-            'optimizer': 'TEXT',
-            'patience': 'INTEGER',
-            'epoch': 'INTEGER',
-            'batch_size': 'INTEGER',
-            'activation': 'TEXT',
-            'kernel_regularizer': 'TEXT',
-            'loss_function': 'TEXT',
-        }
-        self.other_column_types = {
-            'test_loss': 'REAL',
-            'close_data': 'TEXT',
-            'train_predict': 'TEXT',
-            'test_predict': 'TEXT',
-            'predictions': 'TEXT'
-        }
-
-
-    def save_data(self, params, test_loss, close_data, train_predict, test_predict, predictions):
+    def __init__(self, database_name: str):
         """
-        Saves model data to SQLite3 database.
+        Initialize LSTMDatabase object.
 
         Parameters:
-        - Various parameters related to model configuration and training.
+        - database_name: Name of the SQLite database file.
         """
-        table_name = "LSTM_model"
+        try:
+            # TODO - Search if using pydantic models would be better. Find a way out from specifying each param as TEXT.
+            self.db_name = database_name
+            self.conn = sqlite3.connect(self.db_name)
+            self.params = {
+                'train_rate': 'REAL',
+                'time_step': 'INTEGER',
+                'neuron': 'INTEGER',
+                'dropout_rate': 'REAL',
+                'optimizer': 'TEXT',
+                'patience': 'INTEGER',
+                'epoch': 'INTEGER',
+                'batch_size': 'INTEGER',
+                'activation': 'TEXT',
+                'kernel_regularizer': 'TEXT',
+                'loss_function': 'TEXT',
+            }
+            self.training_data = {
+                'epoch_used': 'INTEGER',
+                'start_timestamp': 'INTEGER',
+                'finish_timestamp': 'INTEGER',
+                'total_time': 'INTEGER',
+                'start_date': 'TEXT',
+                'finish_date': 'TEXT',
+                'test_loss': 'REAL',
+                'training_loss': 'TEXT',
+                'validation_loss': 'TEXT',
+                'close_data': 'TEXT',
+                'train_predict': 'TEXT',
+                'test_predict': 'TEXT',
+                'predictions': 'TEXT'
+            }
+        except Exception as e:
+            print(f"Error occurred during initialization: {str(e)}")
 
-        # TODO - Add training and validation loss for the future models
-        # # Serialize lists into JSON strings
-        # training_loss_json = json.dumps(history.history['loss'])
-        # validation_loss_json = json.dumps(history.history['val_loss'])
+    def create_table(self, table_name: str):
+        """
+        Create a table in the database.
 
-        close_data_json = json.dumps(close_data)
-        train_predict_json = json.dumps(train_predict)
-        test_predict_json = json.dumps(test_predict)
-        predictions_json = json.dumps(predictions)
+        Parameters:
+        - table_name: Name of the table to be created.
+        """
+        try:
+            # Connect to SQLite database
+            cur = self.conn.cursor()
 
-        # TODO - Create a database class
+            # Get the keys and data types from params and training_data.
+            params_items = [f'{key} {value}' for key, value in self.params.items()]
+            training_items = [f'{key} {value}' for key, value in self.training_data.items()]
 
-        # Connect to SQLite database
-        conn = sqlite3.connect('LSTM.db')
-        c = conn.cursor()
+            # Create a table
+            query = '''CREATE TABLE IF NOT EXISTS {}
+                (id INTEGER PRIMARY KEY, {}, {})
+                '''.format(table_name, ', '.join(params_items), ', '.join(training_items))
+            cur.execute(query)
+            print(f"Table {table_name} created successfully.")
 
-        # FIXME - The code is way too complicated. Make it much more simpler. Hint: BaseModel or things like it.
-        # Create a table to store model data if it doesn't exist
-        c.execute('''CREATE TABLE IF NOT EXISTS LSTM_model
-             (id INTEGER PRIMARY KEY, {}, {})'''.format(', '.join([f'{key} {value}' for key, value in self.params_column_types.items()]), ', '.join([f'{key} {value}' for key, value in self.other_column_types.items()])))
+            # Commit changes and close connection
+            self.conn.commit()
+            self.conn.close()
+        except Exception as e:
+            print(f"Error occurred during table creation: {str(e)}")
 
-        # FIXME - Move this code to the Database class once you create it.
-        # Insert data into the database
-        c.execute("INSERT INTO LSTM_model (train_rate, time_step, neuron, dropout_rate, optimizer, patience, epoch, batch_size, activation, kernel_regularizer, loss_function, test_loss, close_data, train_predict, test_predict, predictions) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-          tuple(params[key] for key in self.params_column_types.keys()) + (test_loss, close_data_json, train_predict_json, test_predict_json, predictions_json))
+    def insert_data(self, params: dict, training_data: dict, table_name: str):
+        """
+        Insert data into the table.
 
+        Parameters:
+        - params: Dictionary containing parameter values.
+        - training_data: Dictionary containing training data values.
+        - table_name: Name of the table to insert data into.
+        """
+        try:
+            # Connect to SQLite database
+            cur = self.conn.cursor()
 
-        # Commit changes and close connection
-        conn.commit()
-        conn.close()
-        
+            # Prepare column names and placeholders for the INSERT statement
+            columns = ', '.join(self.params.keys()) + ', ' + ', '.join(self.training_data.keys())
+            placeholders = ', '.join(['?'] * (len(self.params) + len(self.training_data)))
 
+            # Prepare values for the INSERT statement
+            values = tuple(params.get(key, '') for key in self.params.keys()) + \
+                     tuple(training_data.get(key, '') for key in self.training_data.keys())
 
+            # Execute the INSERT statement
+            query = "INSERT INTO {} ({}) VALUES ({})".format(table_name, columns, placeholders)
+            cur.execute(query, values)
 
-if __name__ == '__main__':
-    # TODO - This should be in another file in it should be in loop within the folder.
-    # JSON file
-    f = open ("data_(0.75, 6, 25, 0.2, 'adam', 7, 50, 10, 'tanh', 0.01, 'mean_absolute_error').json", "r")
-    
-    # Reading from file
-    data = json.loads(f.read())
+            # Commit changes and close connection
+            self.conn.commit()
+            self.conn.close()
+        except Exception as e:
+            print(f"Error occurred during data insertion: {str(e)}")
 
+    def save_data(self, params: dict, training_data: dict, table_name: str):
+        """
+        Create table (if not exists) and insert data into it.
 
-    params = data['params']
-    test_loss = data['test_loss']
-    close_data = data['close_data']
-    train_predict = data['train_predict']
-    test_predict = data['test_predict']
-    predictions = data['predictions']
-
-
-    data2 = LSTMDatabase()
-    data2.save_data(params=params, test_loss=test_loss, close_data=close_data, train_predict=train_predict, test_predict=test_predict, predictions=predictions)
+        Parameters:
+        - params: Dictionary containing parameter values.
+        - training_data: Dictionary containing training data values.
+        - table_name: Name of the table to insert data into.
+        """
+        try:
+            self.create_table(table_name)
+            self.insert_data(params, training_data, table_name)
+        except Exception as e:
+            print(f"Error occurred during save data process: {str(e)}")

@@ -1,14 +1,15 @@
 import os
 import json
 import matplotlib.pyplot as plt
+from datetime import datetime
 
 
 # TODO - Remove this file once you complete the other TODOs
 
 
 class LSTMModelHelper:
-    def __init__(self):
-        pass
+    def __init__(self, database_name: str):
+        self.db = database_name
 
     def training_validation_loss_plot(self, history, params, current_time):
         """
@@ -88,42 +89,45 @@ class LSTMModelHelper:
 
     def save_data(self, train_rate, time_step, neuron, dropout_rate, optimizer, patience, epoch, batch_size, activation, kernel_regularizer, loss_function, history, test_loss, close_data, train_predict, test_predict, predictions, params):
         """
-        Saves model data to JSON file.
+        Saves model data to the database.
 
         Parameters:
         - Various parameters related to model configuration and training.
         """
-        # Prepare JSON object
-        data = {
-            'params': {
-                'train_rate': train_rate,
-                'time_step': time_step,
-                'neuron': neuron,
-                'dropout_rate': dropout_rate,
-                'optimizer': optimizer,
-                'patience': patience,
-                'epoch': epoch,
-                'batch_size': batch_size,
-                'activation': activation,
-                'kernel_regularizer': kernel_regularizer,
-                'loss_function': loss_function,
-            },
-            'training_loss': history.history['loss'],
-            'validation_loss': history.history['val_loss'],
+        current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+
+        # Save model data to the database
+        table_name = 'model_data'
+        params = {
+            'train_rate': train_rate,
+            'time_step': time_step,
+            'neuron': neuron,
+            'dropout_rate': dropout_rate,
+            'optimizer': optimizer,
+            'patience': patience,
+            'epoch': epoch,
+            'batch_size': batch_size,
+            'activation': activation,
+            'kernel_regularizer': kernel_regularizer,
+            'loss_function': loss_function,
+        }
+        training_data = {
+            'epoch_used': epoch,
+            'start_timestamp': int(history.epoch[0]),
+            'finish_timestamp': int(history.epoch[-1]),
+            'total_time': int(history.epoch[-1] - history.epoch[0]),
+            'start_date': history.epoch[0],
+            'finish_date': history.epoch[-1],
             'test_loss': test_loss,
-            'close_data': [item for sublist in close_data.values.tolist() for item in sublist],
-            'train_predict': train_predict.tolist(),
-            'test_predict': test_predict.tolist(),
-            'predictions': [item for sublist in predictions.tolist() for item in sublist]
+            'training_loss': json.dumps(history.history['loss']),
+            'validation_loss': json.dumps(history.history['val_loss']),
+            'close_data': json.dumps([item for sublist in close_data.values.tolist() for item in sublist]),
+            'train_predict': json.dumps(train_predict.tolist()),
+            'test_predict': json.dumps(test_predict.tolist()),
+            'predictions': json.dumps([item for sublist in predictions.tolist() for item in sublist])
         }
 
-        data_folder_name = 'model_data_files'
-        if not os.path.exists(data_folder_name):
-            os.makedirs(data_folder_name)
-
-        # Save as JSON
-        with open(f'{data_folder_name}/data_{params}.json', 'w') as f:
-            json.dump(data, f)
+        self.db.save_data(params, training_data, table_name)
 
 # Example usage:
 # lstm_helper = LSTMModelHelper()
