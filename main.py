@@ -126,7 +126,7 @@ if __name__ == '__main__':
 
         train_date = df['date'].iloc[time_step : time_step+len(train_predict)]
         test_date = df['date'].iloc[len(train_predict) + 2*time_step + time_step : len(train_predict) + 2*time_step + time_step + len(test_predict)]
-
+        
         
         modelhelper.plot_close_and_predictions(df, close_data, train_date, train_predict, test_date, test_predict, params)
 
@@ -137,8 +137,9 @@ if __name__ == '__main__':
         predictions = model.predict(last_data)
         predictions = predictions.reshape(-1, 1)
         predictions = scaler.inverse_transform(predictions)
-        
-        freq = 'h'
+
+        # FIXME - It always prints daily intervals no matter what.
+        freq = 'W' # TODO - This should be updated automatically by interval
         last_date = df['date'].iloc[-1]
         future_dates = pd.date_range(start=last_date, periods=time_step+1, freq=freq)[1:]
         
