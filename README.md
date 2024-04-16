@@ -17,17 +17,10 @@ This repository contains Python scripts for training LSTM models, saving data to
    ```bash
    docker build -t lstm-model .
    ```
-
-````
-
 5. Run the Docker container:
    ```bash
    docker run lstm-model
    ```
-
-Sure, here's the updated section for installing without Docker:
-
-````
 
 ## Installation without Docker
 
@@ -36,11 +29,10 @@ Sure, here's the updated section for installing without Docker:
 1. Clone this repository to your local machine.
 2. Open Terminal and navigate to the root directory of the repository.
 3. Create a Python virtual environment named `mlp_lstm`:
+
    ```bash
    python3 -m venv mlp_lstm
    ```
-
-````
 
 4. Activate the virtual environment:
    ```bash
@@ -83,4 +75,3 @@ Sure, here's the updated section for installing without Docker:
    ```bash
    deactivate
    ```
-````
