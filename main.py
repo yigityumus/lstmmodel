@@ -6,9 +6,8 @@ import tensorflow as tf
 from sklearn.preprocessing import MinMaxScaler
 from keras.models import Sequential
 from keras.callbacks import EarlyStopping
-from keras.layers import Dense, Dropout
+from keras.layers import Dense, Dropout, Input, LSTM
 from keras.regularizers import l2
-from keras.layers import LSTM
 
 import itertools
 import os
@@ -28,7 +27,7 @@ from lstm_database import LSTMDatabase
 if __name__ == '__main__':
 
     current_time = dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    print(current_time)
+    print(f"Current time: {current_time}")
     
 
     physical_devices = tf.config.list_physical_devices('GPU')
@@ -47,7 +46,7 @@ if __name__ == '__main__':
     # print(df.head())
 
     close_data = df[['close']]
-    print(f"close_data shape:    {close_data.shape}")
+    print(f"close_data shape: {close_data.shape}")
 
     param_combinations = list(itertools.product(*parameter_list.values()))
     total_combinations = len(param_combinations)
@@ -90,8 +89,8 @@ if __name__ == '__main__':
 
         # Build and compile the model
         model = Sequential([
-            LSTM(neuron, input_shape=(None, 1), activation=activation, 
-                 kernel_regularizer=l2(kernel_regularizer)),
+            Input(shape=(None, 1)),
+            LSTM(neuron, activation=activation, kernel_regularizer=l2(kernel_regularizer)),
             Dropout(dropout_rate),
             Dense(time_step)
         ])
@@ -170,3 +169,5 @@ if __name__ == '__main__':
         
         # Append progress information to file
         append_to_times_and_epochs(i, total_combinations, elapsed_minutes, elapsed_seconds, current_time, saved_data)
+        if i >= 2:
+            break

@@ -24,14 +24,14 @@ class LSTMModelHelper:
     def create_folders(self) -> None:
         folders = [self.folder_training_validation_loss, self.folder_close_and_predictions, self.folder_future_predictions]
         try:
-            images_folder = self.create_folder('images', self.security)
+            self.images_folder = self.create_folder('images', self.security)
         except Exception as e:
             print(f"Error occurred while creating main images folder: {str(e)}")
             return
 
         for folder in folders:
             try:
-                self.create_folder(os.path.join(images_folder, folder))
+                self.create_folder(os.path.join(self.images_folder, folder))
             except Exception as e:
                 print(f"Error occurred while creating {folder} folder: {str(e)}")
 
@@ -253,10 +253,10 @@ class LSTMModelHelper:
         assert isinstance(params, tuple), f"params must be a tuple. You provided type: {type(folder_name)}"
 
         try:
-            images_folder = os.path.join('images', self.security, folder_name)
+            # images_folder = os.path.join(self.security, 'images')
             # LSTMModelHelper.create_folder(images_folder)
             # LSTMModelHelper.create_folder(os.path.join(images_folder, folder_name))
-            file_path = os.path.join(images_folder, folder_name, f"{folder_name}_{str(params)}.png")
+            file_path = os.path.join(self.images_folder, folder_name, f"{folder_name}_{str(params)}.png")
             plt.savefig(file_path)
         except Exception as e:
             print(f"An error occurred when saving the {folder_name} plot: {str(e)}")

@@ -329,7 +329,7 @@ def append_to_times_and_epochs(i: int, total_combinations: int, elapsed_minutes:
     """
     try:
         with open('times_and_epochs.txt', 'a+') as file:
-            file.write(f'{i+1}/{total_combinations} finished in {elapsed_minutes}m {elapsed_seconds}s. Current time: {current_time} ({saved_data["epoch_used"]}/{saved_data["epoch"]} epoch)\n')
+            file.write(f'{i+1}/{total_combinations} finished in {elapsed_minutes}m {elapsed_seconds}s. Current time: {current_time} ({saved_data["training_data"]["epoch_used"]}/{saved_data["params_dict"]["epoch"]} epoch)\n')
         print("Data appended to 'times_and_epochs.txt' successfully.")
     except Exception as e:
         print(f"An error occurred while appending data to 'times_and_epochs.txt': {str(e)}")
