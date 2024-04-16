@@ -1,0 +1,51 @@
+{
+    "parameter_list": {
+        "train_rate": [
+            0.75
+        ],
+        "time_step": [
+            6,
+            24,
+            72,
+            168
+        ],
+        "neuron": [
+            25,
+            50,
+            100
+        ],
+        "dropout_rate": [
+            0.2
+        ],
+        "optimizer": [
+            "adam",
+            "rmsprop"
+        ],
+        "patience": [
+            7
+        ],
+        "epoch": [
+            50,
+            100,
+            150
+        ],
+        "batch_size": [
+            10,
+            25,
+            50,
+            100
+        ],
+        "activation": [
+            "tanh"
+        ],
+        "kernel_regularizer": [
+            0.01
+        ],
+        "loss_function": [
+            "mean_absolute_error",
+            "mean_squared_error"
+        ]
+    },
+    "security": "ETHUSDT_1w",
+    "database_name": "LSTM_try.db"
+}

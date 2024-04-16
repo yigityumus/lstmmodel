@@ -2,9 +2,10 @@ import itertools
 from datetime import datetime
 import os
 import numpy as np
-# import matplotlib.pyplot as plt
-# import pandas as pd
+import matplotlib.pyplot as plt
+import pandas as pd
 from typing import List, Tuple
+import json
 
 # Define parameter lists
 parameter_list = {
@@ -273,3 +274,63 @@ def save_image(folder_name: str, params: Tuple) -> None:
         plt.savefig(f'images/{folder_name}/{folder_name}_{params}.png')
     except Exception as e:
         print(f"An error occurred when saving the {folder_name} plot: {str(e)}")
+
+
+def load_params_from_json(json_file: str) -> dict:
+    """
+    Load parameters from a JSON file.
+
+    Parameters:
+    - json_file (str): Path to the JSON file containing parameters.
+
+    Returns:
+    - dict: Dictionary containing parameter configurations.
+    """
+    try:
+        with open(json_file, 'r') as file:
+            params = json.load(file)
+        
+        if not isinstance(params, dict):
+            raise TypeError("JSON file should contain a dictionary.")
+
+        parameter_list = params.get('parameter_list')
+        security = params.get('security')
+        database_name = params.get('database_name')
+
+        if not isinstance(parameter_list, dict):
+            raise TypeError("'parameter_list' in JSON file should be a dictionary.")
+        if not isinstance(security, str):
+            raise TypeError("'security' in JSON file should be a string.")
+        
+        return parameter_list, security, database_name
+
+    except FileNotFoundError:
+        print(f"File '{json_file}' not found.")
+        return None, None, None
+    except json.JSONDecodeError:
+        print(f"Error decoding JSON in file '{json_file}'. Please check the file format.")
+        return None, None, None
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return None, None, None
+    
+
+def append_to_times_and_epochs(i: int, total_combinations: int, elapsed_minutes: int, elapsed_seconds: int, current_time: str, saved_data: dict) -> None:
+    """
+    Append the progress information to 'times_and_epochs.txt'.
+
+    Parameters:
+    - i (int): Current iteration.
+    - total_combinations (int): Total number of combinations.
+    - elapsed_minutes (int): Elapsed minutes.
+    - elapsed_seconds (int): Elapsed seconds.
+    - current_time (str): Current time.
+    - saved_data (dict): Dictionary containing saved data.
+    """
+    try:
+        with open('times_and_epochs.txt', 'a+') as file:
+            file.write(f'{i+1}/{total_combinations} finished in {elapsed_minutes}m {elapsed_seconds}s. Current time: {current_time} ({saved_data["epoch_used"]}/{saved_data["epoch"]} epoch)\n')
+        print("Data appended to 'times_and_epochs.txt' successfully.")
+    except Exception as e:
+        print(f"An error occurred while appending data to 'times_and_epochs.txt': {str(e)}")
+

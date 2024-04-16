@@ -28,10 +28,10 @@ class LSTMDatabase:
             self.training_data = {
                 'epoch_used': 'INTEGER',
                 'start_timestamp': 'INTEGER',
-                'finish_timestamp': 'INTEGER',
+                'end_timestamp': 'INTEGER',
                 'total_time': 'INTEGER',
                 'start_date': 'TEXT',
-                'finish_date': 'TEXT',
+                'end_date': 'TEXT',
                 'test_loss': 'REAL',
                 'training_loss': 'TEXT',
                 'validation_loss': 'TEXT',
@@ -64,11 +64,12 @@ class LSTMDatabase:
                 (id INTEGER PRIMARY KEY, {}, {})
                 '''.format(table_name, ', '.join(params_items), ', '.join(training_items))
             cur.execute(query)
-            print(f"Table {table_name} created successfully.")
+
+            # Check if the table was created
+            if cur.rowcount == 1:
+                print(f"Table {table_name} created successfully.")
 
             # Commit changes and close connection
-            self.conn.commit()
-            self.conn.close()
         except Exception as e:
             print(f"Error occurred during table creation: {str(e)}")
 
@@ -100,7 +101,6 @@ class LSTMDatabase:
 
             # Commit changes and close connection
             self.conn.commit()
-            self.conn.close()
         except Exception as e:
             print(f"Error occurred during data insertion: {str(e)}")
 
