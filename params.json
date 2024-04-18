@@ -46,6 +46,7 @@
             "mean_squared_error"
         ]
     },
-    "security": "ETHUSDT_1w",
+    "security": "ETHUSDT",
+    "interval": "1w",
     "database_name": "LSTM_try.db"
 }

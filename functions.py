@@ -295,6 +295,7 @@ def load_params_from_json(json_file: str) -> dict:
 
         parameter_list = params.get('parameter_list')
         security = params.get('security')
+        interval = params.get('interval')
         database_name = params.get('database_name')
 
         if not isinstance(parameter_list, dict):
@@ -302,17 +303,17 @@ def load_params_from_json(json_file: str) -> dict:
         if not isinstance(security, str):
             raise TypeError("'security' in JSON file should be a string.")
         
-        return parameter_list, security, database_name
+        return parameter_list, security, interval, database_name
 
     except FileNotFoundError:
         print(f"File '{json_file}' not found.")
-        return None, None, None
+        return None, None, None, None
     except json.JSONDecodeError:
         print(f"Error decoding JSON in file '{json_file}'. Please check the file format.")
-        return None, None, None
+        return None, None, None, None
     except Exception as e:
         print(f"An error occurred: {e}")
-        return None, None, None
+        return None, None, None, None
     
 
 def append_to_times_and_epochs(i: int, total_combinations: int, elapsed_minutes: int, elapsed_seconds: int, current_time: str, saved_data: dict) -> None:
@@ -334,3 +335,59 @@ def append_to_times_and_epochs(i: int, total_combinations: int, elapsed_minutes:
     except Exception as e:
         print(f"An error occurred while appending data to 'times_and_epochs.txt': {str(e)}")
 
+
+
+def determine_frequency(interval: str) -> str:
+    """
+    Determine the frequency of timestamps based on the interval string.
+
+    Args:
+        interval (str): Interval string in the format "{x}{y}", where "x" is an integer and "y" represents the interval type.
+
+    Returns:
+        str: Frequency of timestamps.
+    """
+    try:
+        # Validate input data type
+        if not isinstance(interval, str):
+            raise TypeError("Interval must be a string.")
+        if not interval:
+            raise ValueError("Invalid interval format. It should not be empty.")
+
+        # Parse the integer part
+        x = ''
+        for char in interval:
+            if char.isdigit():
+                x += char
+            else:
+                break
+        
+        # Parse the string part
+        y = interval[len(x):]
+
+        # Mapping of interval type to frequency string
+        interval_mapping = {
+            'mo': 'M',    # Monthly
+            'w': 'W',     # Weekly
+            'd': 'D',     # Calendar Daily  # Use `B` for business day
+            'h': 'h',     # Hourly
+            'm': 'min',   # Minutely
+            's': 's',     # Secondly
+            'ms': 'ms'    # Millisecondly
+        }
+
+        # Check if the interval type is valid
+        if y in interval_mapping:
+            assert int(x) >= 1, 'Integer part of interval should be at least 1.'
+            if int(x) == 1:
+                return f"{interval_mapping[y]}"
+            return f"{int(x)}{interval_mapping[y]}"
+        else:
+            raise ValueError(f"Invalid interval type: {y}")
+
+    except TypeError as te:
+        print(f"TypeError: {te}")
+    except ValueError as ve:
+        print(f"ValueError: {ve}")
+    except Exception as e:
+        print('An error occurred when determining frequency: ', e)
