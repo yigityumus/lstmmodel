@@ -17,7 +17,8 @@ import time
 
 from functions import (generate_dataset, 
                        load_params_from_json,
-                       append_to_times_and_epochs
+                       append_to_times_and_epochs,
+                       determine_frequency
                        )
 from lstm_model_helper import LSTMModelHelper
 from lstm_database import LSTMDatabase
@@ -39,10 +40,13 @@ if __name__ == '__main__':
     # 0: all messages, 1: INFO messages, 2: INFO and WARNING messages, 3: INFO, WARNING, and ERROR messages
 
 
-    parameter_list, SECURITY, DATABASE_NAME = load_params_from_json('params.json')
+    parameter_list, SECURITY, interval, DATABASE_NAME = load_params_from_json('params.json')
 
-    csv_path = os.path.join('csv_files', f'{SECURITY}.csv')
+    sec_int = f"{SECURITY}_{interval}"
+
+    csv_path = os.path.join('csv_files', f'{sec_int}.csv')
     df = pd.read_csv(csv_path)
+    df['date'] = pd.to_datetime(df['date']) # To fix the x axis dates on the graphs. Store them as pd.datetime instead of str.
     # print(df.head())
 
     close_data = df[['close']]
@@ -54,7 +58,7 @@ if __name__ == '__main__':
 
 
     # LSTM MODEL
-    modelhelper = LSTMModelHelper(security=SECURITY)
+    modelhelper = LSTMModelHelper(security=sec_int)
 
 
     # Iterate over all parameter combinations
@@ -127,23 +131,24 @@ if __name__ == '__main__':
         train_date = df['date'].iloc[time_step : time_step+len(train_predict)]
         test_date = df['date'].iloc[len(train_predict) + 2*time_step + time_step : len(train_predict) + 2*time_step + time_step + len(test_predict)]
         
-        
         modelhelper.plot_close_and_predictions(df, close_data, train_date, train_predict, test_date, test_predict, params)
 
-        # Predict next dates
+        # - - - - - - - - - - - - - - - - - - - - F U T U R E   P R E D I C T I O N S - - - - - - - - - - - - - - - - - -
         last_data = test_data_scaled[-time_step:]
         last_data = last_data.reshape(1, time_step, 1)
+        # TODO - Why does it have to be [[[]]]
             
         predictions = model.predict(last_data)
         predictions = predictions.reshape(-1, 1)
         predictions = scaler.inverse_transform(predictions)
 
-        # FIXME - It always prints daily intervals no matter what.
-        freq = 'W' # TODO - This should be updated automatically by interval
-        last_date = df['date'].iloc[-1]
-        future_dates = pd.date_range(start=last_date, periods=time_step+1, freq=freq)[1:]
-        
+        freq = determine_frequency(interval)
 
+        last_date = df['date'].iloc[-1]
+        # TODO - Why does it start 1 interval later?
+        future_dates = pd.date_range(start=last_date, periods=time_step+1, freq=freq)[1:]
+                
+        
         modelhelper.plot_future_predictions(future_dates, predictions, params)
         
         # Print progress
@@ -170,5 +175,5 @@ if __name__ == '__main__':
         
         # Append progress information to file
         append_to_times_and_epochs(i, total_combinations, elapsed_minutes, elapsed_seconds, current_time, saved_data)
-        if i >= 2:
+        if i >= 1:
             break

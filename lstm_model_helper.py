@@ -8,6 +8,7 @@ import itertools
 from keras.src.callbacks import History
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 import numpy as np
 
 
@@ -200,10 +201,16 @@ class LSTMModelHelper:
         assert isinstance(params, tuple), 'params must be a tuple.'
 
         try:
-            plt.figure(figsize=(12, 6))
+            fig, ax = plt.subplots(figsize=(12, 6))
+            # plt.figure(figsize=(12, 6))
             plt.plot(df['date'], close_data, label='Original Close')
             plt.plot(train_date, train_predict[:,-1], label='Training Predictions')
             plt.plot(test_date, test_predict[:,-1], label='Test Predictions')
+
+            # Use YearLocator and YearFormatter on the axes object (ax)
+            ax.xaxis.set_major_locator(mdates.YearLocator())
+            ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
+
             plt.xlabel('Time')
             plt.ylabel('Close Value')
             plt.title(f'Close Values vs. Predictions {params}')
