@@ -1,3 +1,4 @@
+h5py # dependency for keras
 pandas
 numpy
 matplotlib
