@@ -10,5 +10,8 @@ COPY . /app
 # Install any needed packages specified in requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Define a volume for output data
+VOLUME /app/output
+
 # Run the model_helper.py file
 CMD ["python", "main.py"]
