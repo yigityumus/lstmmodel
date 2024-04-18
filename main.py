@@ -118,7 +118,7 @@ if __name__ == '__main__':
         test_loss = model.evaluate(X_test, y_test.reshape(y_test.shape[0], y_test.shape[1])) # TODO research default
         print('Test Loss:', test_loss)
 
-        
+        # TODO - Do we really need these?
         trainPredictPlot = np.empty_like(close_data)
         trainPredictPlot[:, :] = np.nan
         trainPredictPlot[time_step:len(train_predict)+time_step, :] = train_predict[:,-1].reshape(-1,1)

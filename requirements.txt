@@ -1,4 +1,5 @@
-h5py # dependency for keras
+# h5py # dependency for keras
+pkgconfig # for keras (h5py) which uses hdf5
 pandas
 numpy
 matplotlib

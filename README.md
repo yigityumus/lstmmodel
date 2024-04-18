@@ -2,6 +2,11 @@
 
 This repository contains Python scripts for training LSTM models, saving data to a SQLite database, and visualizing the results.
 
+## Prerequisites
+
+- Python 3.9 or higher
+- [DB Browser for SQLite](https://sqlitebrowser.org/) (version X.X.X)
+
 ## Files
 
 - `lstm_model_helper.py`: Contains the `LSTMModelHelper` class with methods for creating folders, plotting training/validation loss, plotting close values and predictions, plotting future predictions, and saving images.
