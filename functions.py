@@ -14,7 +14,7 @@ parameter_list = {
     'neuron': [25, 50, 100],
     'dropout_rate': [0.2],  # 0.1, 0.3
     'optimizer': ['adam', 'rmsprop'],
-    'patience': [7],  # 13
+    'patience': [7],  # 10
     'epoch': [50, 100, 150],
     'batch_size': [100],
     'activation': ['sigmoid'],  # sigmoid
@@ -337,7 +337,7 @@ def append_to_times_and_epochs(i: int, total_combinations: int, elapsed_minutes:
 
 
 
-def determine_frequency(interval: str) -> str:
+def determine_frequency(last_date: pd.Timestamp, interval: str) -> str:
     """
     Determine the frequency of timestamps based on the interval string.
 
@@ -361,6 +361,7 @@ def determine_frequency(interval: str) -> str:
                 x += char
             else:
                 break
+        assert int(x) >= 1, 'Integer part of interval should be at least 1.'
         
         # Parse the string part
         y = interval[len(x):]
@@ -376,12 +377,15 @@ def determine_frequency(interval: str) -> str:
             'ms': 'ms'    # Millisecondly
         }
 
-        # Check if the interval type is valid
-        if y in interval_mapping:
-            assert int(x) >= 1, 'Integer part of interval should be at least 1.'
-            if int(x) == 1:
-                return f"{interval_mapping[y]}"
-            return f"{int(x)}{interval_mapping[y]}"
+        x = "" if int(x) == 1 else int(x)
+        
+        
+        if y == 'w':
+            # Get the day of the week for the last date
+            day_of_week = last_date.day_name()[:3].upper()
+            return f'{x}W-{day_of_week}'
+        elif y in interval_mapping:
+            return f"{x}{interval_mapping[y]}"
         else:
             raise ValueError(f"Invalid interval type: {y}")
 
