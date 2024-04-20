@@ -6,6 +6,12 @@ This repository contains Python scripts for training LSTM models, saving data to
 
 - Python 3.9 or higher
 - [DB Browser for SQLite](https://sqlitebrowser.org/) (version X.X.X)
+- You need to make sure that pkg-config is installed in ARM architectures (For example: Apple Silicon)
+
+## Data
+
+Candlestick data (ohlcv) of ETHUSDT.P prices from 2019 to 2024 March for 1h, 1d, 3d and 1w intervals. Data is fetched by using Binance API. It contains 7 columns: timestamp, date, open, high, low, close, volume. Timestamp is in unix format (seconds).
+You can also find csv files I used from this [Kaggle](https://www.kaggle.com/datasets/yumusyigit/ethusdt-p-prices-from-2019-to-2024-march){:target="\_blank"} page.
 
 ## Files
 

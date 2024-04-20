@@ -77,7 +77,7 @@ if __name__ == '__main__':
         train_data = np.array(train_data)
         test_data = np.array(test_data)
         
-        scaler = MinMaxScaler(feature_range=(0, 1)) # TODO is there any other options?
+        scaler = MinMaxScaler(feature_range=(0, 1))
         
         train_data_scaled = scaler.fit_transform(train_data)
         test_data_scaled = scaler.transform(test_data)
@@ -112,7 +112,7 @@ if __name__ == '__main__':
         train_predict = model.predict(X_train)
         test_predict = model.predict(X_test)
         
-        train_predict = scaler.inverse_transform(train_predict) # TODO research the function
+        train_predict = scaler.inverse_transform(train_predict)
         test_predict = scaler.inverse_transform(test_predict)
         
         test_loss = model.evaluate(X_test, y_test.reshape(y_test.shape[0], y_test.shape[1])) # TODO research default
@@ -125,8 +125,7 @@ if __name__ == '__main__':
         
         testPredictPlot = np.full_like(close_data, np.nan)
         testPredictPlot[len(train_data) + time_step : len(train_data) + time_step + len(test_predict), :] = test_predict[:,-1].reshape(-1,1)
-        
-        current_time = dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
 
         train_date = df['date'].iloc[time_step : time_step+len(train_predict)]
         test_date = df['date'].iloc[len(train_predict) + 2*time_step + time_step : len(train_predict) + 2*time_step + time_step + len(test_predict)]
@@ -142,10 +141,11 @@ if __name__ == '__main__':
         predictions = predictions.reshape(-1, 1)
         predictions = scaler.inverse_transform(predictions)
 
-        freq = determine_frequency(interval)
+        
 
         last_date = df['date'].iloc[-1]
-        # TODO - Why does it start 1 interval later?
+        freq = determine_frequency(last_date, interval)
+
         future_dates = pd.date_range(start=last_date, periods=time_step+1, freq=freq)[1:]
                 
         
