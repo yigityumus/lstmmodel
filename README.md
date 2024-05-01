@@ -11,7 +11,7 @@ This repository contains Python scripts for training LSTM models, saving data to
 ## Data
 
 Candlestick data (ohlcv) of ETHUSDT.P prices from 2019 to 2024 March for 1h, 1d, 3d and 1w intervals. Data is fetched by using Binance API. It contains 7 columns: timestamp, date, open, high, low, close, volume. Timestamp is in unix format (seconds).
-You can also find csv files I used from this [Kaggle](https://www.kaggle.com/datasets/yumusyigit/ethusdt-p-prices-from-2019-to-2024-march){:target="\_blank"} page.
+You can also find csv files I used from this [Kaggle](https://www.kaggle.com/datasets/yumusyigit/ethusdt-p-prices-from-2019-to-2024-march) page.
 
 ## Files
 
