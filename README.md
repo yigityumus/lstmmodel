@@ -1,6 +1,6 @@
 # LSTM Model Helper
 
-This repository contains Python scripts for training LSTM models, saving data to a SQLite database, and visualizing the results.
+This repository contains Python scripts for training LSTM and Bi-LSTM models, saving data to a SQLite database, and visualizing the results.
 
 ## Prerequisites
 
