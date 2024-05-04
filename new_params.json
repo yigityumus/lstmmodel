@@ -41,7 +41,5 @@
         "interval": "1h",
         "data_type": "FUTURES"
     },
-    "security": "ETHUSDT",
-    "interval": "1h",
     "database_name": "LSTM_try.db"
 }
