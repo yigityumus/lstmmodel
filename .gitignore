@@ -5,3 +5,4 @@ ETHUSDT_1w/
 residuals/
 LSTM_try.db
 times_and_epochs.txt
+residual_calculations.csv
