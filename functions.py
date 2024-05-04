@@ -395,3 +395,37 @@ def determine_frequency(last_date: pd.Timestamp, interval: str) -> str:
         print(f"ValueError: {ve}")
     except Exception as e:
         print('An error occurred when determining frequency: ', e)
+
+
+
+
+
+
+def load_params_from_json_alternative(json_file: str) -> dict:
+    """
+    Load parameters from a JSON file.
+
+    Parameters:
+    - json_file (str): Path to the JSON file containing parameters.
+
+    Returns:
+    - dict: Dictionary containing parameter configurations.
+    """
+    try:
+        with open(json_file, 'r') as file:
+            params = json.load(file)
+        
+        if not isinstance(params, dict):
+            raise TypeError("JSON file should contain a dictionary.")
+
+        return params
+
+    except FileNotFoundError:
+        print(f"File '{json_file}' not found.")
+        return None
+    except json.JSONDecodeError:
+        print(f"Error decoding JSON in file '{json_file}'. Please check the file format.")
+        return None
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return None
