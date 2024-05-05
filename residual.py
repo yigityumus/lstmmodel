@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-from functions import load_params_from_json_alternative
+from functions import load_params_from_json
 
 
 
@@ -42,7 +42,7 @@ def save_list_of_tuples_to_csv(data, headers, filename):
 
 
 
-params = load_params_from_json_alternative('new_params.json')
+params = load_params_from_json('new_params.json')
 params_keys = [key for key in params['parameter_list'].keys()]
 
 other_keys = ['id', 'test_loss', 'predictions']

@@ -1,15 +1,20 @@
 {
-    "parameter_list": {
+    "model_params": {
         "train_rate": [
             0.75
         ],
         "time_step": [
-            24
+            24,
+            48,
+            72
         ],
         "neuron": [
+            10,
+            25,
             50
         ],
         "dropout_rate": [
+            0.1,
             0.2
         ],
         "optimizer": [
@@ -22,17 +27,19 @@
             100
         ],
         "batch_size": [
+            10,
             25,
-            50
+            50,
+            100
         ],
         "activation": [
-            "tanh",
-            "sigmoid"
+            "tanh"
         ],
         "kernel_regularizer": [
             0.01
         ],
         "loss_function": [
+            "mean_absolute_error",
             "mean_squared_error"
         ]
     },
@@ -41,5 +48,5 @@
         "interval": "1h",
         "data_type": "FUTURES"
     },
-    "database_name": "LSTM_try.db"
+    "database_name": "Models.db"
 }

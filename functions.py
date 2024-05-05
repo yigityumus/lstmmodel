@@ -276,47 +276,48 @@ def save_image(folder_name: str, params: Tuple) -> None:
         print(f"An error occurred when saving the {folder_name} plot: {str(e)}")
 
 
-def load_params_from_json(json_file: str) -> dict:
-    """
-    Load parameters from a JSON file.
+# # old version
+# def load_params_from_json(json_file: str) -> dict:
+#     """
+#     Load parameters from a JSON file.
 
-    Parameters:
-    - json_file (str): Path to the JSON file containing parameters.
+#     Parameters:
+#     - json_file (str): Path to the JSON file containing parameters.
 
-    Returns:
-    - dict: Dictionary containing parameter configurations.
-    """
-    try:
-        with open(json_file, 'r') as file:
-            params = json.load(file)
+#     Returns:
+#     - dict: Dictionary containing parameter configurations.
+#     """
+#     try:
+#         with open(json_file, 'r') as file:
+#             params = json.load(file)
         
-        if not isinstance(params, dict):
-            raise TypeError("JSON file should contain a dictionary.")
+#         if not isinstance(params, dict):
+#             raise TypeError("JSON file should contain a dictionary.")
 
-        parameter_list = params.get('parameter_list')
-        security = params.get('security')
-        interval = params.get('interval')
-        database_name = params.get('database_name')
+#         parameter_list = params.get('parameter_list')
+#         security = params.get('security')
+#         interval = params.get('interval')
+#         database_name = params.get('database_name')
 
-        if not isinstance(parameter_list, dict):
-            raise TypeError("'parameter_list' in JSON file should be a dictionary.")
-        if not isinstance(security, str):
-            raise TypeError("'security' in JSON file should be a string.")
+#         if not isinstance(parameter_list, dict):
+#             raise TypeError("'parameter_list' in JSON file should be a dictionary.")
+#         if not isinstance(security, str):
+#             raise TypeError("'security' in JSON file should be a string.")
         
-        return parameter_list, security, interval, database_name
+#         return parameter_list, security, interval, database_name
 
-    except FileNotFoundError:
-        print(f"File '{json_file}' not found.")
-        return None, None, None, None
-    except json.JSONDecodeError:
-        print(f"Error decoding JSON in file '{json_file}'. Please check the file format.")
-        return None, None, None, None
-    except Exception as e:
-        print(f"An error occurred: {e}")
-        return None, None, None, None
+#     except FileNotFoundError:
+#         print(f"File '{json_file}' not found.")
+#         return None, None, None, None
+#     except json.JSONDecodeError:
+#         print(f"Error decoding JSON in file '{json_file}'. Please check the file format.")
+#         return None, None, None, None
+#     except Exception as e:
+#         print(f"An error occurred: {e}")
+#         return None, None, None, None
     
 
-def append_to_times_and_epochs(i: int, total_combinations: int, elapsed_minutes: int, elapsed_seconds: int, current_time: str, saved_data: dict, model_type: str) -> None:
+def append_to_times_and_epochs(i: int, total_combinations: int, params: tuple, elapsed_minutes: int, elapsed_seconds: int, current_time: str, saved_data: dict, model_type: str, output_folder: str, ticker: str) -> None:
     """
     Append the progress information to 'times_and_epochs.txt'.
 
@@ -329,11 +330,12 @@ def append_to_times_and_epochs(i: int, total_combinations: int, elapsed_minutes:
     - saved_data (dict): Dictionary containing saved data.
     """
     try:
-        with open('times_and_epochs.txt', 'a+') as file:
-            file.write(f'[{model_type}] {i+1}/{total_combinations} finished in {elapsed_minutes}m {elapsed_seconds}s. Current time: {current_time} ({saved_data["training_data"]["epoch_used"]}/{saved_data["params_dict"]["epoch"]} epoch)\n')
-        print("Data appended to 'times_and_epochs.txt' successfully.")
+        text_file = os.path.join(output_folder, f'{ticker}_logs.txt')
+        with open(text_file, 'a+') as file:
+            file.write(f'[{model_type}] {i+1}/{total_combinations} finished in {elapsed_minutes}m {elapsed_seconds}s. Params: {params} Current time: {current_time} ({saved_data["training_data"]["epoch_used"]}/{saved_data["params_dict"]["epoch"]} epoch)\n')
+        print(f"Data appended to {text_file} successfully.")
     except Exception as e:
-        print(f"An error occurred while appending data to 'times_and_epochs.txt': {str(e)}")
+        print(f"An error occurred while appending data to {text_file}: {str(e)}")
 
 
 
@@ -401,7 +403,7 @@ def determine_frequency(last_date: pd.Timestamp, interval: str) -> str:
 
 
 
-def load_params_from_json_alternative(json_file: str) -> dict:
+def load_params_from_json(json_file: str) -> dict:
     """
     Load parameters from a JSON file.
 
@@ -414,9 +416,6 @@ def load_params_from_json_alternative(json_file: str) -> dict:
     try:
         with open(json_file, 'r') as file:
             params = json.load(file)
-        
-        if not isinstance(params, dict):
-            raise TypeError("JSON file should contain a dictionary.")
 
         return params
 

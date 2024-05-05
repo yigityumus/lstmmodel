@@ -18,7 +18,7 @@ import time
 from functions import (generate_dataset, 
                        load_params_from_json,
                        append_to_times_and_epochs,
-                       determine_frequency
+                       determine_frequency,
                        )
 from lstm_model_helper import LSTMModelHelper
 from lstm_database import LSTMDatabase
@@ -39,12 +39,18 @@ if __name__ == '__main__':
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  
     # 0: all messages, 1: INFO messages, 2: INFO and WARNING messages, 3: INFO, WARNING, and ERROR messages
 
+    # Original
+    # parameter_list, SECURITY, interval, DATABASE_NAME = load_params_from_json('params.json')
 
-    parameter_list, SECURITY, interval, DATABASE_NAME = load_params_from_json('params.json')
+    params = load_params_from_json('new_params.json')
+    parameter_list = params['model_params']
+    SECURITY = params['data']['security']
+    interval = params['data']['interval']
+    DATABASE_NAME = params['database_name']
 
     sec_int = f"{SECURITY}_{interval}"
 
-    csv_path = os.path.join('csv_files', f'{sec_int}.csv')
+    csv_path = os.path.join('csv_files', f'{sec_int}_FUTURES.csv')
     df = pd.read_csv(csv_path)
     df['date'] = pd.to_datetime(df['date']) # To fix the x axis dates on the graphs. Store them as pd.datetime instead of str.
     # print(df.head())
@@ -58,7 +64,7 @@ if __name__ == '__main__':
 
 
     # LSTM MODEL
-    modelhelper = LSTMModelHelper(security=sec_int)
+    modelhelper = LSTMModelHelper(sec_int)
 
 
     # Iterate over all parameter combinations
@@ -128,7 +134,10 @@ if __name__ == '__main__':
 
 
         train_date = df['date'].iloc[time_step : time_step+len(train_predict)]
-        test_date = df['date'].iloc[len(train_predict) + 2*time_step + time_step : len(train_predict) + 2*time_step + time_step + len(test_predict)]
+        # test_date = df['date'].iloc[len(train_predict) + 2*time_step + time_step : len(train_predict) + 2*time_step + time_step + len(test_predict)]
+        test_date = df['date'].iloc[-len(test_predict) - time_step:]
+        print(train_date)
+        print(test_date)
         
         modelhelper.plot_close_and_predictions(df, close_data, train_date, train_predict, test_date, test_predict, params)
 

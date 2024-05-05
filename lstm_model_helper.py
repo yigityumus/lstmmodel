@@ -14,8 +14,8 @@ import numpy as np
 
 
 class LSTMModelHelper:
-    def __init__(self, security: str):
-        self.security = security
+    def __init__(self, ticker: str):
+        self.ticker = ticker
         self.folder_training_validation_loss = 'training_validation_loss'
         self.folder_close_and_predictions = 'close_and_predictions'
         self.folder_future_predictions = 'future_predictions'
@@ -25,7 +25,8 @@ class LSTMModelHelper:
     def create_folders(self) -> None:
         folders = [self.folder_training_validation_loss, self.folder_close_and_predictions, self.folder_future_predictions]
         try:
-            self.images_folder = self.create_folder('images', self.security)
+            self.output_folder = self.create_folder(os.path.join('output', self.ticker))
+            self.images_folder = self.create_folder(os.path.join(self.output_folder, 'images'), self.ticker)
         except Exception as e:
             print(f"Error occurred while creating main images folder: {str(e)}")
             return
@@ -131,6 +132,19 @@ class LSTMModelHelper:
             print("An error occurred when generating combinations: ", e)
             return None
     
+    @staticmethod
+    def dict_to_tuple(dict: dict) -> tuple:
+        """
+        Convert a dictionary to a tuple.
+
+        Parameters:
+        - dict (dict): The dictionary to convert.
+
+        Returns:
+        - tuple: The tuple containing dictionary values.
+        """
+        return tuple(dict.values())
+
 
     @staticmethod
     def params_to_dict(params: tuple, parameter_list: dict) -> List[dict]:
@@ -151,7 +165,7 @@ class LSTMModelHelper:
             return None
 
 
-    def plot_training_validation_loss(self, model_type: str, training_loss: List[float], validation_loss: List[float], params: Tuple) -> None:
+    def plot_training_validation_loss(self, index: int, model_type: str, training_loss: List[float], validation_loss: List[float], params: dict) -> None:
         """
         Plot training and validation loss.
 
@@ -162,24 +176,25 @@ class LSTMModelHelper:
         """
         assert isinstance(training_loss, list), 'training_loss must be a list.'
         assert isinstance(validation_loss, list), 'validation_loss must be a list.'
-        assert isinstance(params, tuple), 'params must be a tuple.'
+        assert isinstance(params, dict), 'params must be a dict.'
         assert len(training_loss) == len(validation_loss), 'Lengths of training_loss and validation_loss must be the same.'
 
-        try:        
+        try:
+            params_str = LSTMModelHelper.dict_to_tuple(params)        
             plt.figure(figsize=(12, 6))
             plt.plot(training_loss, 'r', label='Training loss')
             plt.plot(validation_loss, 'b', label='Validation loss')
-            plt.title(f'{model_type} Training and validation loss for: {params} (date: {LSTMModelHelper.get_current_time()})')
+            plt.title(f'{model_type} Training and validation loss - {index} {params_str} (date: {LSTMModelHelper.get_current_time()})')
             plt.legend(loc=0)
-            self.save_image(model_type, self.folder_training_validation_loss, params)
+            self.save_image(index, model_type, self.folder_training_validation_loss, params)
             plt.close()
         except Exception as e:
             print(f"An error occurred when creating the {self.folder_training_validation_loss} plot: {str(e)}")
 
 
-    def plot_close_and_predictions(self, model_type: str, df: pd.DataFrame, close_data: pd.DataFrame, train_date: pd.Series, 
+    def plot_close_and_predictions(self, index: int, model_type: str, df: pd.DataFrame, close_data: pd.DataFrame, train_date: pd.Series, 
                                train_predict: np.ndarray, test_date: pd.Series, test_predict: np.ndarray, 
-                               params: Tuple) -> None:
+                               params: dict) -> None:
         """
         Plot close values and predictions.
 
@@ -190,7 +205,7 @@ class LSTMModelHelper:
         - train_predict (numpy.ndarray): Predictions for training data.
         - test_date (pandas.DataFrame): Dates for test data.
         - test_predict (numpy.ndarray): Predictions for test data.
-        - params (tuple): Model parameters.
+        - params (dict): Model parameters.
         """
         assert isinstance(df, pd.DataFrame), 'df must be a pandas.DataFrame.'
         assert isinstance(close_data, pd.DataFrame), 'close_data must be a pandas.DataFrame.'
@@ -198,7 +213,7 @@ class LSTMModelHelper:
         assert isinstance(train_predict, np.ndarray), 'train_predict must be a numpy.ndarray.'
         assert isinstance(test_date, pd.Series), 'test_date must be a pandas.Series.'
         assert isinstance(test_predict, np.ndarray), 'test_predict must be a numpy.ndarray.'
-        assert isinstance(params, tuple), 'params must be a tuple.'
+        assert isinstance(params, dict), 'params must be a dict.'
 
         try:
             fig, ax = plt.subplots(figsize=(12, 6))
@@ -211,59 +226,62 @@ class LSTMModelHelper:
             ax.xaxis.set_major_locator(mdates.YearLocator())
             ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
 
+            params_str = LSTMModelHelper.dict_to_tuple(params) 
             plt.xlabel('Time')
             plt.ylabel('Close Value')
-            plt.title(f'{model_type} Close Values vs. Predictions {params}')
+            plt.title(f'{model_type} Close Values vs. Predictions - {index} {params_str}')
             plt.legend()
-            self.save_image(model_type, self.folder_close_and_predictions, params)
+            self.save_image(index, model_type, self.folder_close_and_predictions, params)
             plt.close()
         except Exception as e:
             print(f"An error occurred when creating {self.folder_close_and_predictions} plot: {str(e)}")
 
 
-    def plot_future_predictions(self, model_type: str, future_dates: pd.DatetimeIndex, predictions: np.ndarray, params: Tuple) -> None:
+    def plot_future_predictions(self, index: int, model_type: str, future_dates: pd.DatetimeIndex, predictions: np.ndarray, params: dict) -> None:
         """
         Plot future price predictions.
 
         Parameters:
         - future_dates (pandas.DatetimeIndex): Dates for future predictions.
         - predictions (numpy.ndarray): Future price predictions.
-        - params (tuple): Model parameters.
+        - params (dict): Model parameters.
         """
         assert isinstance(future_dates, pd.DatetimeIndex), "future_dates must be a pandas.DatetimeIndex."
         assert isinstance(predictions, np.ndarray), "predictions must be a numpy.ndarray."
-        assert isinstance(params, tuple), "params must be a tuple."
+        assert isinstance(params, dict), "params must be a dict."
 
         try:
+            params_str = LSTMModelHelper.dict_to_tuple(params)
             plt.figure(figsize=(12, 6))
             plt.plot(future_dates, predictions, label='Predictions')
             plt.xlabel('Date')
             plt.ylabel('Price')
-            plt.title(f'{model_type} Future Price Predictions {params} ({LSTMModelHelper.get_current_time()})')
+            plt.title(f'{model_type} Future Price Predictions - {index} {params_str} ({LSTMModelHelper.get_current_time()})')
             plt.legend()
-            self.save_image(model_type, self.folder_future_predictions, params)
+            self.save_image(index, model_type, self.folder_future_predictions, params)
             plt.close()
         except Exception as e:
             print(f"An error occurred when creating {self.folder_future_predictions} plot: {str(e)}")
 
 
-    def save_image(self, model_type: str, folder_name, params: Tuple) -> None:
+    def save_image(self, index: int, model_type: str, folder_name, params: dict) -> None:
         """
         Save the current plot as an image.
 
         Parameters:
         - folder_name (str): Name of the folder where the image will be saved.
-        - params (tuple): Tuple containing parameters used for the plot.
+        - params (dict): Dictionary object containing parameters used for the plot.
         """
 
         assert isinstance(folder_name, str), f"folder_name must be str. You provided: {folder_name}. Type: {type(folder_name)}"
-        assert isinstance(params, tuple), f"params must be a tuple. You provided type: {type(folder_name)}"
+        assert isinstance(params, dict), f"params must be a dict. You provided type {type(params)}"
 
         try:
-            # images_folder = os.path.join(self.security, 'images')
+            # images_folder = os.path.join(self.ticker_fullname, 'images')
             # LSTMModelHelper.create_folder(images_folder)
             # LSTMModelHelper.create_folder(os.path.join(images_folder, folder_name))
-            file_path = os.path.join(self.images_folder, folder_name, f"{model_type}_{folder_name}_{str(params)}.png")
+            params_str = LSTMModelHelper.dict_to_tuple(params)
+            file_path = os.path.join(self.images_folder, folder_name, f"{model_type}_{folder_name}_{index}_{str(params_str)}.png")
             plt.savefig(file_path)
         except Exception as e:
             print(f"An error occurred when saving the {folder_name} plot: {str(e)}")

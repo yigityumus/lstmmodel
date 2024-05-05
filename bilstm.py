@@ -25,6 +25,7 @@ from lstm_database import LSTMDatabase
 
 
 
+
 if __name__ == '__main__':
 
     current_time = dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -42,11 +43,15 @@ if __name__ == '__main__':
     # 0: all messages, 1: INFO messages, 2: INFO and WARNING messages, 3: INFO, WARNING, and ERROR messages
 
 
-    parameter_list, SECURITY, interval, DATABASE_NAME = load_params_from_json('new_params.json')
+    parameters = load_params_from_json('new_params.json')
+    parameter_list = parameters['parameter_list']
+    interval = parameters['data']['interval']
+    DATABASE_NAME = parameters['database_name']
 
-    sec_int = f"{SECURITY}_{interval}"
 
-    csv_path = os.path.join('csv_files', f'{sec_int}.csv')
+    ticker_fullname = f"{parameters['data']['security']}_{interval}_{parameters['data']['data_type']}"
+
+    csv_path = os.path.join('csv_files', f'{ticker_fullname}.csv')
     df = pd.read_csv(csv_path)
     df['date'] = pd.to_datetime(df['date']) # To fix the x axis dates on the graphs. Store them as pd.datetime instead of str.
     # print(df.head())
@@ -60,7 +65,7 @@ if __name__ == '__main__':
 
 
     # LSTM MODEL
-    modelhelper = LSTMModelHelper(security=sec_int)
+    modelhelper = LSTMModelHelper(ticker=ticker_fullname)
 
 
     # Iterate over all parameter combinations
@@ -73,8 +78,6 @@ if __name__ == '__main__':
         train_size = int(len(close_data) * train_rate)
         train_data = close_data[:train_size]
         test_data = close_data[train_size:]
-        # print(f'train_data: {train_data.shape}')
-        # print(f'test_data: {test_data.shape}')
         
         train_data = np.array(train_data)
         test_data = np.array(test_data)
@@ -83,8 +86,6 @@ if __name__ == '__main__':
         
         train_data_scaled = scaler.fit_transform(train_data)
         test_data_scaled = scaler.transform(test_data)
-        # print(f'train_data_scaled: {train_data_scaled.shape}')
-        # print(f'test_data_scaled: {test_data_scaled.shape}')
 
         # Generate datasets
         X_train, y_train = generate_dataset(train_data_scaled, time_step)
@@ -134,14 +135,6 @@ if __name__ == '__main__':
         test_loss = model.evaluate(X_test, y_test.reshape(y_test.shape[0], y_test.shape[1])) # TODO research default
         print('Test Loss:', test_loss)
 
-        # TODO - Do we really need these?
-        trainPredictPlot = np.empty_like(close_data)
-        trainPredictPlot[:, :] = np.nan
-        trainPredictPlot[time_step:len(train_predict)+time_step, :] = train_predict[:,-1].reshape(-1,1)
-        
-        testPredictPlot = np.full_like(close_data, np.nan)
-        testPredictPlot[len(train_data) + time_step : len(train_data) + time_step + len(test_predict), :] = test_predict[:,-1].reshape(-1,1)
-
 
         train_date = df['date'].iloc[time_step : time_step+len(train_predict)]
         test_date = df['date'].iloc[len(train_predict) + 2*time_step + time_step : len(train_predict) + 2*time_step + time_step + len(test_predict)]
@@ -171,7 +164,7 @@ if __name__ == '__main__':
         end_time = time.time()
         
         times = LSTMModelHelper.calculate_times(start_time, end_time)
-        table_name = f"{SECURITY}_{interval}_FUTURES_{model_type}"
+        table_name = f"{ticker_fullname}_{model_type}"
 
         params_dict = LSTMModelHelper.params_to_dict(params, parameter_list)
 
