@@ -165,6 +165,28 @@ def create_dataset(dataset: np.ndarray, time_step: int) -> tuple[np.ndarray, np.
     except Exception as e:
         print("An error occurred in create_dataset: ", e)
         return None, None
+    
+
+def generate_dataset_new(dataset, time_step):
+    X, y = [], []
+    for i in range(len(dataset)-2*time_step-1):
+        X.append(dataset[i:(i+time_step), 0])
+        y.append(dataset[(i+time_step):(i+2*time_step), 0])
+    
+    X, y = np.array(X), np.array(y)
+    X = X.reshape(X.shape[0], X.shape[1], 1)
+    return X, y
+
+
+def create_target_data(dataset, time_step):
+    X, y = [], []
+    for i in range(len(dataset)-2*time_step):
+        X.append(dataset[i:(i+time_step), 0])
+        y.append(dataset[(i+time_step):(i+2*time_step), 0])
+    
+    X, y = np.array(X), np.array(y)
+    X = X.reshape(X.shape[0], X.shape[1], 1)
+    return X, y
 
 
 def training_validation_loss_plot(training_loss: List[float], validation_loss: List[float], params: Tuple) -> None:
@@ -344,6 +366,7 @@ def determine_frequency(last_date: pd.Timestamp, interval: str) -> str:
     Determine the frequency of timestamps based on the interval string.
 
     Args:
+        last_date (pandas.Timestamp): timestamp of the last date of the data
         interval (str): Interval string in the format "{x}{y}", where "x" is an integer and "y" represents the interval type.
 
     Returns:
@@ -428,3 +451,10 @@ def load_params_from_json(json_file: str) -> dict:
     except Exception as e:
         print(f"An error occurred: {e}")
         return None
+    
+
+def non_shuffling_train_test_split(X, y, train_rate):
+    i = int(train_rate * X.shape[0]) + 1
+    X_train, X_test = np.split(X, [i])
+    y_train, y_test = np.split(y, [i])
+    return X_train, X_test, y_train, y_test

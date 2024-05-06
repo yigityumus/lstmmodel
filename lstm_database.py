@@ -26,6 +26,9 @@ class LSTMDatabase:
                 'loss_function': 'TEXT',
             }
             self.training_data = {
+                'mae': 'REAL',
+                'mse': 'REAL',
+                'r2': 'REAL',
                 'epoch_used': 'INTEGER',
                 'start_timestamp': 'INTEGER',
                 'end_timestamp': 'INTEGER',
