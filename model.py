@@ -362,8 +362,9 @@ class Model:
         assert 'patience' in params and 'epoch' in params and 'batch_size' in params, "Required parameters are missing in params."
 
         early_stopping = EarlyStopping(monitor='val_loss', patience=params['patience'], restore_best_weights=True)
+        log_dir = os.path.join(self.logs_path, run_name)
         logger = TensorBoard(
-            log_dir=f"output/logs/{run_name}",
+            log_dir=log_dir,
             histogram_freq=1,
             write_graph=True,
             write_images=True,
@@ -465,7 +466,7 @@ class Model:
         return {
             'mae_score': mae_score,
             'mse_score': mse_score,
-            'r2': r2
+            'r2_score': r2
         }
     
 
@@ -559,9 +560,9 @@ class Model:
                 'epoch_used': len(history.history['loss']),
                 'test_loss': model_evaluation['test_loss'],
 
-                'mae': evaluation_metrics['mae'],
-                'mse': evaluation_metrics['mse'],
-                'r2': evaluation_metrics['r2'],
+                'mae_score': evaluation_metrics['mae_score'],
+                'mse_score': evaluation_metrics['mse_score'],
+                'r2_score': evaluation_metrics['r2_score'],
 
                 'training_loss': json.dumps(history.history['loss']),
                 'validation_loss': json.dumps(history.history['val_loss']),
@@ -612,6 +613,7 @@ class Model:
             #  - - - - - - - - - - - - I N F E R E N C E S   A N D   P R E D I C T I O N S - - - - - - - - - - - - - - - - - - 
 
             model_evaluation = self.evaluate_model(model, scaler)
+            evaluation_metrics = self.calculate_metrics(self.y_test, model_evaluation['test_predict'])
 
             train_date, test_date = self.train_test_dates(df, params, model_evaluation)
 
@@ -621,7 +623,6 @@ class Model:
              # - - - - - - - - - - - - - - - - - - - - F U T U R E   P R E D I C T I O N S - - - - - - - - - - - - - - - - - -
 
             predictions = self.future_predicts(model, params, scaler)
-            evaluation_metrics = self.calculate_metrics(self.y_test, predictions)
 
             last_date = df['date'].iloc[-1]
             freq = determine_frequency(last_date, self.input_params['interval'])
