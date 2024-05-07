@@ -650,9 +650,7 @@ class Model:
             
             # Append progress information to file
             # text_file_folder = os.path.join(self.output_folder, self.ticker_name)
-            ticker_model_path = os.path.join(self.model_path, self.ticker_name)
-            Model.create_folder(ticker_model_path)
-            model_path = os.path.join(ticker_model_path, f"{self.model_type}_{params_str}.keras")
+            model_path = os.path.join(self.model_path, f"{self.model_type}_{params_str}.keras")
             model.save(model_path)
             # append_to_times_and_epochs(i, total_combinations, params_str, elapsed_minutes, elapsed_seconds, current_time, data, self.model_type, text_file_folder, self.ticker_name)
             text_folder_path = os.path.join(self.logs_path, logs_folders[0])
