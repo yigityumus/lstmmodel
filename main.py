@@ -20,7 +20,7 @@ from functions import (generate_dataset,
                        append_to_times_and_epochs,
                        determine_frequency,
                        )
-from lstm_model_helper import LSTMModelHelper
+from lstm_model_helper import LSTMPlotter
 from lstm_database import LSTMDatabase
 
 
@@ -50,7 +50,7 @@ if __name__ == '__main__':
 
     sec_int = f"{SECURITY}_{interval}"
 
-    csv_path = os.path.join('csv_files', f'{sec_int}_FUTURES.csv')
+    csv_path = os.path.join('input/csv_files', f'{sec_int}_FUTURES.csv')
     df = pd.read_csv(csv_path)
     df['date'] = pd.to_datetime(df['date']) # To fix the x axis dates on the graphs. Store them as pd.datetime instead of str.
     # print(df.head())
@@ -64,7 +64,7 @@ if __name__ == '__main__':
 
 
     # LSTM MODEL
-    modelhelper = LSTMModelHelper(sec_int)
+    # modelhelper = LSTMModelHelper(sec_int)
 
 
     # Iterate over all parameter combinations
@@ -110,6 +110,10 @@ if __name__ == '__main__':
         early_stopping = EarlyStopping(monitor='val_loss', patience=patience, restore_best_weights=True)
         history = model.fit(X_train, y_train, validation_data=(X_test, y_test),
                             epochs=epoch, batch_size=batch_size, verbose=1, callbacks=[early_stopping])
+        print(history.history['loss'])
+        print(history.history['val_loss'])
+        exit(0)
+
 
         modelhelper.plot_training_validation_loss(history.history['loss'], history.history['val_loss'], params)
 

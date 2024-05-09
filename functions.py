@@ -206,7 +206,7 @@ def training_validation_loss_plot(training_loss: List[float], validation_loss: L
     try:        
         plt.figure(figsize=(12, 6))
         plt.plot(len(training_loss), training_loss, 'r', label='Training loss')
-        plt.plot(len(training_loss), validation_loss, 'b', label='Validation loss')
+        plt.plot(len(validation_loss), validation_loss, 'b', label='Validation loss')
         plt.title(f'Training and validation loss for: {params} (date: {get_current_time()})')
         plt.legend(loc=0)
         save_image('tra_val_loss', params)

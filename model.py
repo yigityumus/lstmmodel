@@ -15,7 +15,7 @@ import json
 import time
 from keras.src.callbacks import History
 
-from functions import determine_frequency, append_to_times_and_epochs
+from functions import determine_frequency
 from lstm_model_helper import LSTMPlotter
 from lstm_database import LSTMDatabase
 
@@ -29,7 +29,11 @@ class Model:
         self.model_type = model_type
         self.params_json = params_json
         self.input_folder = 'input'
-        self.output_folder = 'output_modified'
+        self.output_folder = self.get_output_folder_name()
+    
+    def get_output_folder_name(self):
+        # return os.path.join('Volumes', 'DATA', 'lstmmodel', 'output')
+        return 'output'
     
 
     @staticmethod
@@ -336,7 +340,7 @@ class Model:
                                                      kernel_regularizer=l2(params['kernel_regularizer'])), name="bilstm_1"))
         elif self.model_type == 'LSTM':
             core_layers.insert(1, LSTM(params['neuron'], activation=params['activation'], 
-                                       kernel_regularizer=l2(params['kernel_regularizer'])), name="lstm_1")
+                                       kernel_regularizer=l2(params['kernel_regularizer']), name="lstm_1"))
         else:
             print(f"Unknown model_type: {self.model_type}")
             exit(0)
@@ -497,7 +501,7 @@ class Model:
             epoch_used, epoch = saved_data['training_data']['epoch_used'], saved_data['params_dict']['epoch']
             current_time = LSTMPlotter.get_current_time()
             with open(text_file, 'a+') as file:
-                file.write(f"[{self.model_type}] {index+1}/{total_combinations} finished in {elapsed_minutes}m {elapsed_seconds}s. Params: {params_str} Current time: {current_time} ({epoch_used}/{epoch} epoch)\n")
+                file.write(f"[{self.model_type}] {index}/{total_combinations} finished in {elapsed_minutes}m {elapsed_seconds}s. Params: {params_str} Current time: {current_time} ({epoch_used}/{epoch} epoch)\n")
             print(f"Data appended to {text_file} successfully.")
         except Exception as e:
             print(f"An error occurred while appending data to {text_file}: {str(e)}")
@@ -594,7 +598,7 @@ class Model:
 
         for i, params in enumerate(param_combinations):
             params_str = str(Model.dict_to_tuple(params))
-            RUN_NAME = f"run_{params_str}"
+            RUN_NAME = f"run_{self.model_type}_{params_str}"
 
             start_time = time.time()
 
@@ -608,7 +612,7 @@ class Model:
             history = self.train_model(model, params, RUN_NAME)
 
             tra_val_path = os.path.join(self.fig_path, fig_folders[0])
-            plotter.plot_training_validation_loss(tra_val_path, self.model_type, i, params_str, history.history['loss'], history.history['val_loss'])
+            plotter.plot_training_validation_loss(tra_val_path, self.model_type, i+1, params_str, history.history['loss'], history.history['val_loss'])
 
             #  - - - - - - - - - - - - I N F E R E N C E S   A N D   P R E D I C T I O N S - - - - - - - - - - - - - - - - - - 
 
@@ -618,7 +622,7 @@ class Model:
             train_date, test_date = self.train_test_dates(df, params, model_evaluation)
 
             close_pred_path = os.path.join(self.fig_path, fig_folders[1])
-            plotter.plot_close_and_predictions(close_pred_path, self.model_type, i, params_str, df, self.close_data, train_date, model_evaluation['train_predict'], test_date, model_evaluation['test_predict'])
+            plotter.plot_close_and_predictions(close_pred_path, self.model_type, i+1, params_str, df, self.close_data, train_date, model_evaluation['train_predict'], test_date, model_evaluation['test_predict'])
 
              # - - - - - - - - - - - - - - - - - - - - F U T U R E   P R E D I C T I O N S - - - - - - - - - - - - - - - - - -
 
@@ -629,7 +633,7 @@ class Model:
 
             future_dates = pd.date_range(start=last_date, periods=params['time_step']+1, freq=freq)[1:]
             future_pred_path = os.path.join(self.fig_path, fig_folders[2])
-            plotter.plot_future_predictions(future_pred_path, self.model_type, i, params_str, future_dates, predictions)
+            plotter.plot_future_predictions(future_pred_path, self.model_type, i+1, params_str, future_dates, predictions)
 
             end_time = time.time()
 
@@ -654,5 +658,5 @@ class Model:
             model.save(model_path)
             # append_to_times_and_epochs(i, total_combinations, params_str, elapsed_minutes, elapsed_seconds, current_time, data, self.model_type, text_file_folder, self.ticker_name)
             text_folder_path = os.path.join(self.logs_path, logs_folders[0])
-            self.append_to_times_and_epochs(text_folder_path, i, total_combinations, elapsed_minutes, elapsed_seconds, params_str, data)
+            self.append_to_times_and_epochs(text_folder_path, i+1, total_combinations, elapsed_minutes, elapsed_seconds, params_str, data)
 

@@ -1,6 +1,8 @@
+import os
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
+
 from model import Model
 import tensorflow as tf
-import os
 import sys
 import datetime as dt
 
@@ -24,8 +26,8 @@ if __name__ == '__main__':
     # model = Model(model_type, 'new_params.json')
     # model.run()
 
-    # lstm_model = Model('LSTM', 'new_params.json')
-    # lstm_model.run()
+    lstm_model = Model('LSTM', 'new_params.json')
+    lstm_model.run()
 
     bilstm_model = Model('BILSTM', 'new_params.json')
     bilstm_model.run()
