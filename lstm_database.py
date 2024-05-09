@@ -41,7 +41,8 @@ class LSTMDatabase:
                 'close_data': 'TEXT',
                 'train_predict': 'TEXT',
                 'test_predict': 'TEXT',
-                'predictions': 'TEXT'
+                'predictions': 'TEXT',
+                'residuals': 'TEXT'
             }
         except Exception as e:
             print(f"Error occurred during initialization: {str(e)}")

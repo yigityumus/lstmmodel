@@ -30,7 +30,11 @@ class Model:
         self.params_json = params_json
         self.input_folder = 'input'
         self.output_folder = self.get_output_folder_name()
+        self.ticker_name = self.get_ticker_name()
+        self.input_data = os.path.join(self.input_folder, 'csv_files', f'{self.get_ticker_name()}.csv')
+
     
+
     def get_output_folder_name(self):
         # return os.path.join('Volumes', 'DATA', 'lstmmodel', 'output')
         return 'output'
@@ -63,10 +67,10 @@ class Model:
         - ticker_name (str): Name of the ticker.
         """
 
-        ticker_path = os.path.join(self.output_folder, self.ticker_name)
-        self.fig_path = os.path.join(ticker_path, "fig")
-        self.logs_path = os.path.join(ticker_path, "logs")
-        self.model_path = os.path.join(ticker_path, "model")
+        self.ticker_path = os.path.join(self.output_folder, self.ticker_name)
+        self.fig_path = os.path.join(self.ticker_path, "fig")
+        self.logs_path = os.path.join(self.ticker_path, "logs")
+        self.model_path = os.path.join(self.ticker_path, "model")
 
         # TODO - Make this code idiotproof by using lists below.
         # fig_folders = ["training_validation_loss", "inferences_and_predictions", "future_predictions", "residual"]
@@ -74,7 +78,7 @@ class Model:
         # model_folders = []
 
         folders = {
-            ticker_path: {
+            self.ticker_path: {
                 "fig": {
                     "training_validation_loss": None,
                     "inferences_and_predictions": None,
@@ -111,6 +115,22 @@ class Model:
             print(f"An error occurred while creating initial folders: {e}")
             exit(1)
  
+
+    @staticmethod
+    def save_to_csv(df: pd.DataFrame, filename: str) -> str:
+        try:
+            if os.path.exists(filename):
+                base, ext = os.path.splitext(filename)
+                i = 2
+                while os.path.exists(f"{base}{i}{ext}"):
+                    i += 1
+                filename = f"{base}{i}{ext}"
+
+            df.to_csv(filename, index=False)
+            return filename
+        except Exception as e:
+            print(f"An error occured when saving dataframe to {filename} file: {str(e)}")
+    
 
     @staticmethod
     def dict_to_tuple(dict: dict) -> tuple:
@@ -161,33 +181,21 @@ class Model:
         self.database_name = os.path.join(self.output_folder, params['database_name'])
     
 
-    def get_input_data(self) -> pd.DataFrame:
-        """
-        Get input data from a CSV file.
-
-        This function reads input data from a CSV file corresponding to the ticker name.
-        
-        Returns:
-        pd.DataFrame or None: The DataFrame containing input data, or None if an error occurred.
-        
-        Raises:
-        FileNotFoundError: If the CSV file corresponding to the ticker name does not exist.
-        TypeError: If the loaded data is not of DataFrame type.
-        """
-        # Getting ticker name
-        self.ticker_name = self.get_ticker_name()
-        
-        # Constructing CSV path
-        csv_path = os.path.join(self.input_folder, 'csv_files')
-        ticker_csv_path = os.path.join(csv_path, f'{self.ticker_name}.csv')
-
-        # Error validation for file existence
-        if not os.path.exists(ticker_csv_path):
-            raise FileNotFoundError(f"CSV file '{ticker_csv_path}' not found.")
-        
+    def load_csv(self, file_path: str) -> pd.DataFrame:
         try:
-            df = pd.read_csv(ticker_csv_path)
-            
+            df = pd.read_csv(file_path)
+            return df
+        except FileNotFoundError as e:
+            raise FileNotFoundError(f"File '{file_path}' not found. Detail: {str(e)}")
+        except Exception as e:
+            print(f"An error occurred in load_csv function: {e}")
+            exit(1)
+    
+
+    def get_input_data(self) -> pd.DataFrame:
+        try:
+            df = pd.read_csv(self.input_data)
+            df = self.split_input_data(df)
             # Converting date column to datetime to fix the x axis dates on the graphs. Store them as pd.datetime instead of str.
             df['date'] = pd.to_datetime(df['date'])
 
@@ -197,7 +205,39 @@ class Model:
 
             return df
         except Exception as e:
-            print(f"An error occurred in get_input_data function: {e}")
+            print(f"An error occurred when getting input data: {str(e)}")
+            exit(1)
+
+
+    def split_input_data(self, input_data: pd.DataFrame) -> pd.DataFrame:
+        try:
+            # split last time_step element for residual calculations
+            max_time_step = max([x for x in self.model_params['time_step'] if isinstance(x, int)])
+            model_df, control_df = Model.split_df(input_data, max_time_step)
+
+            control_filename = os.path.join(self.ticker_path, f'{self.ticker_name}_control_data.csv')
+            self.control_file = Model.save_to_csv(control_df, control_filename)
+            return model_df
+        except Exception as e:
+            print(f"An error occurred when splitting input data: {str(e)}")
+            exit(1)
+
+    
+    @staticmethod
+    def split_df(df: pd.DataFrame, n: int):
+        # Check if n is within the bounds of the DataFrame length
+        try:
+            if n >= len(df):
+                print("Error: The given value of n is greater than or equal to the length of the DataFrame.")
+                exit(1)
+
+            # Split the DataFrame
+            df1 = df.iloc[:-n]
+            df2 = df.iloc[-n:]
+
+            return df1, df2
+        except Exception as e:
+            print(f"An error occurred when splitting the df: {str(e)}")
             exit(1)
 
 
@@ -211,6 +251,7 @@ class Model:
         str: The constructed ticker name.
         """
         try:
+            self.load_params()
             # Retrieving required parameters from input_params
             security = self.input_params['security']
             interval = self.input_params['interval']
@@ -372,7 +413,7 @@ class Model:
             histogram_freq=1,
             write_graph=True,
             write_images=True,
-            write_steps_per_second=True,
+            # write_steps_per_second=True,
             update_freq='epoch',
             profile_batch=f"0, {params['batch_size']}"
         )
@@ -501,10 +542,11 @@ class Model:
             epoch_used, epoch = saved_data['training_data']['epoch_used'], saved_data['params_dict']['epoch']
             current_time = LSTMPlotter.get_current_time()
             with open(text_file, 'a+') as file:
-                file.write(f"[{self.model_type}] {index}/{total_combinations} finished in {elapsed_minutes}m {elapsed_seconds}s. Params: {params_str} Current time: {current_time} ({epoch_used}/{epoch} epoch)\n")
+                file.write(f"[{self.model_type}] {index}/{total_combinations} finished in {elapsed_minutes}m {elapsed_seconds}s. Params: {params_str} ({epoch_used}/{epoch} epoch. Current time: {current_time})\n")
             print(f"Data appended to {text_file} successfully.")
         except Exception as e:
             print(f"An error occurred while appending data to {text_file}: {str(e)}")
+
 
     @staticmethod
     def calculate_times(start_time: float, end_time: float) -> dict:
@@ -545,7 +587,38 @@ class Model:
         }
     
 
-    def save_results(self, times: dict, history: History, model_evaluation: np.ndarray, evaluation_metrics: Dict[str, Any], predictions: np.ndarray, params: Dict[str, Any]) -> dict:
+    def calculate_residuals(self, predictions: np.ndarray, params: Dict[str, Any]):
+        try:
+            control_df = self.load_csv(self.control_file)
+            control_df = control_df.head(params['time_step'])
+            control_df = control_df[['close']]
+
+            if len(control_df) != len(predictions):
+                print("Error: Lengths of control_df and predictions do not match.")
+                exit(1)
+
+            # Assuming control_df has only one column
+            actual_values = control_df.values.reshape(-1, 1)
+            residuals = actual_values - predictions
+            residuals_percentage = (residuals / actual_values) * 100
+            sum_residuals = np.sum(residuals)
+            sum_abs_residuals = np.sum(np.abs(residuals))
+            sum_residual_percentage = np.sum(residuals_percentage)
+            sum_abs_residual_percentage = np.sum(np.abs(residuals_percentage))
+
+            return {
+                'residuals': residuals,
+                'residuals_percentage': residuals_percentage,
+                'sum_residuals': sum_residuals,
+                'sum_abs_residuals': sum_abs_residuals,
+                'sum_residual_percentage': sum_residual_percentage,
+                'sum_abs_residual_percentage': sum_abs_residual_percentage
+            }
+        except Exception as e:
+            print(f"An error occurred when calculating residuals: {str(e)}")
+
+
+    def save_results(self, times: dict, history: History, model_evaluation: np.ndarray, evaluation_metrics: Dict[str, Any], predictions: np.ndarray, residuals: np.ndarray, params: Dict[str, Any]) -> dict:
         """
         Saves model data to the database.
 
@@ -563,17 +636,16 @@ class Model:
                 'end_date': times['end_date'],
                 'epoch_used': len(history.history['loss']),
                 'test_loss': model_evaluation['test_loss'],
-
                 'mae_score': evaluation_metrics['mae_score'],
                 'mse_score': evaluation_metrics['mse_score'],
                 'r2_score': evaluation_metrics['r2_score'],
-
                 'training_loss': json.dumps(history.history['loss']),
                 'validation_loss': json.dumps(history.history['val_loss']),
                 'close_data': json.dumps([item for sublist in self.close_data.values.tolist() for item in sublist]),
                 'train_predict': json.dumps(model_evaluation['train_predict'].tolist()),
                 'test_predict': json.dumps(model_evaluation['test_predict'].tolist()),
-                'predictions': json.dumps([item for sublist in predictions.tolist() for item in sublist])
+                'predictions': json.dumps([item for sublist in predictions.tolist() for item in sublist]),
+                'residuals': json.dumps(residuals['residuals'].tolist())
             },
             'table_name': f'{self.ticker_name}_{self.model_type}'
         }
@@ -585,8 +657,9 @@ class Model:
         fig_folders = ["training_validation_loss", "inferences_and_predictions", "future_predictions", "residual"]
         logs_folders = ['my_logs']
         self.load_params()
-        df = self.get_input_data()
         self.create_initial_folders()
+        df = self.get_input_data()
+        
 
         param_keys = list(self.model_params.keys())
         param_values = list(self.model_params.values())
@@ -622,7 +695,8 @@ class Model:
             train_date, test_date = self.train_test_dates(df, params, model_evaluation)
 
             close_pred_path = os.path.join(self.fig_path, fig_folders[1])
-            plotter.plot_close_and_predictions(close_pred_path, self.model_type, i+1, params_str, df, self.close_data, train_date, model_evaluation['train_predict'], test_date, model_evaluation['test_predict'])
+            plotter.plot_close_and_predictions(close_pred_path, self.model_type, i+1, params_str, df, self.close_data, 
+                                               train_date, model_evaluation['train_predict'], test_date, model_evaluation['test_predict'])
 
              # - - - - - - - - - - - - - - - - - - - - F U T U R E   P R E D I C T I O N S - - - - - - - - - - - - - - - - - -
 
@@ -635,12 +709,15 @@ class Model:
             future_pred_path = os.path.join(self.fig_path, fig_folders[2])
             plotter.plot_future_predictions(future_pred_path, self.model_type, i+1, params_str, future_dates, predictions)
 
+            residuals = self.calculate_residuals(predictions, params)
+            residuals_path = os.path.join(self.fig_path, fig_folders[3])
+            plotter.plot_residuals(residuals_path, self.model_type, i+1, params_str, predictions, residuals['residuals'], residuals['residuals_percentage'])
+
             end_time = time.time()
 
             times = self.calculate_times(start_time, end_time)
 
-
-            data = self.save_results(times, history, model_evaluation, evaluation_metrics, predictions, params)
+            data = self.save_results(times, history, model_evaluation, evaluation_metrics, predictions, residuals, params)
             db = LSTMDatabase(self.database_name)
             db.save_data(data['params_dict'], data['training_data'], data['table_name'])
 

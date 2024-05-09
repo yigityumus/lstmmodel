@@ -29,5 +29,5 @@ if __name__ == '__main__':
     lstm_model = Model('LSTM', 'new_params.json')
     lstm_model.run()
 
-    bilstm_model = Model('BILSTM', 'new_params.json')
-    bilstm_model.run()
+    # bilstm_model = Model('BILSTM', 'new_params.json')
+    # bilstm_model.run()

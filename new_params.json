@@ -39,8 +39,8 @@
             0.01
         ],
         "loss_function": [
-            "mean_absolute_error",
-            "mean_squared_error"
+            "mae",
+            "mse"
         ]
     },
     "data": {
