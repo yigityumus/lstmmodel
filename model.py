@@ -16,7 +16,7 @@ import time
 from keras.src.callbacks import History
 
 from functions import determine_frequency
-from lstm_model_helper import LSTMPlotter
+from lstm_plotter import LSTMPlotter
 from lstm_database import LSTMDatabase
 
 from typing import Dict, Any, Tuple
@@ -181,7 +181,8 @@ class Model:
         self.database_name = os.path.join(self.output_folder, params['database_name'])
     
 
-    def load_csv(self, file_path: str) -> pd.DataFrame:
+    @staticmethod
+    def load_csv(file_path: str) -> pd.DataFrame:
         try:
             df = pd.read_csv(file_path)
             return df
@@ -589,7 +590,7 @@ class Model:
 
     def calculate_residuals(self, predictions: np.ndarray, params: Dict[str, Any]):
         try:
-            control_df = self.load_csv(self.control_file)
+            control_df = Model.load_csv(self.control_file)
             control_df = control_df.head(params['time_step'])
             control_df = control_df[['close']]
 
@@ -600,19 +601,20 @@ class Model:
             # Assuming control_df has only one column
             actual_values = control_df.values.reshape(-1, 1)
             residuals = actual_values - predictions
+
             residuals_percentage = (residuals / actual_values) * 100
-            sum_residuals = np.sum(residuals)
-            sum_abs_residuals = np.sum(np.abs(residuals))
-            sum_residual_percentage = np.sum(residuals_percentage)
-            sum_abs_residual_percentage = np.sum(np.abs(residuals_percentage))
+            # sum_residuals = np.sum(residuals)
+            # sum_abs_residuals = np.sum(np.abs(residuals))
+            # sum_residual_percentage = np.sum(residuals_percentage)
+            # sum_abs_residual_percentage = np.sum(np.abs(residuals_percentage))
 
             return {
                 'residuals': residuals,
                 'residuals_percentage': residuals_percentage,
-                'sum_residuals': sum_residuals,
-                'sum_abs_residuals': sum_abs_residuals,
-                'sum_residual_percentage': sum_residual_percentage,
-                'sum_abs_residual_percentage': sum_abs_residual_percentage
+                # 'sum_residuals': sum_residuals,
+                # 'sum_abs_residuals': sum_abs_residuals,
+                # 'sum_residual_percentage': sum_residual_percentage,
+                # 'sum_abs_residual_percentage': sum_abs_residual_percentage
             }
         except Exception as e:
             print(f"An error occurred when calculating residuals: {str(e)}")
@@ -677,7 +679,7 @@ class Model:
 
             scaler = self.prepare_model(params)
 
-            plotter = LSTMPlotter()
+            # plotter = LSTMPlotter()
 
             # - - - - - - - - - - - - - - - - - - - M O D E L - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
@@ -685,7 +687,7 @@ class Model:
             history = self.train_model(model, params, RUN_NAME)
 
             tra_val_path = os.path.join(self.fig_path, fig_folders[0])
-            plotter.plot_training_validation_loss(tra_val_path, self.model_type, i+1, params_str, history.history['loss'], history.history['val_loss'])
+            LSTMPlotter.plot_training_validation_loss(tra_val_path, self.model_type, i+1, params_str, history.history['loss'], history.history['val_loss'])
 
             #  - - - - - - - - - - - - I N F E R E N C E S   A N D   P R E D I C T I O N S - - - - - - - - - - - - - - - - - - 
 
@@ -695,7 +697,7 @@ class Model:
             train_date, test_date = self.train_test_dates(df, params, model_evaluation)
 
             close_pred_path = os.path.join(self.fig_path, fig_folders[1])
-            plotter.plot_close_and_predictions(close_pred_path, self.model_type, i+1, params_str, df, self.close_data, 
+            LSTMPlotter.plot_close_and_predictions(close_pred_path, self.model_type, i+1, params_str, df, self.close_data, 
                                                train_date, model_evaluation['train_predict'], test_date, model_evaluation['test_predict'])
 
              # - - - - - - - - - - - - - - - - - - - - F U T U R E   P R E D I C T I O N S - - - - - - - - - - - - - - - - - -
@@ -707,11 +709,11 @@ class Model:
 
             future_dates = pd.date_range(start=last_date, periods=params['time_step']+1, freq=freq)[1:]
             future_pred_path = os.path.join(self.fig_path, fig_folders[2])
-            plotter.plot_future_predictions(future_pred_path, self.model_type, i+1, params_str, future_dates, predictions)
+            LSTMPlotter.plot_future_predictions(future_pred_path, self.model_type, i+1, params_str, future_dates, predictions)
 
             residuals = self.calculate_residuals(predictions, params)
             residuals_path = os.path.join(self.fig_path, fig_folders[3])
-            plotter.plot_residuals(residuals_path, self.model_type, i+1, params_str, predictions, residuals['residuals'], residuals['residuals_percentage'])
+            LSTMPlotter.plot_residuals(residuals_path, self.model_type, i+1, params_str, predictions, residuals['residuals'], residuals['residuals_percentage'])
 
             end_time = time.time()
 

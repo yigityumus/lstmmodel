@@ -29,7 +29,7 @@ class LSTMPlotter:
             return None
     
 
-    def plot_training_validation_loss(self, folder_path: str, model_type: str, index: int, params_str: str, training_loss: List[float], validation_loss: List[float]) -> None:
+    def plot_training_validation_loss(folder_path: str, model_type: str, index: int, params_str: str, training_loss: List[float], validation_loss: List[float]) -> None:
         assert isinstance(folder_path, str), 'folder_path must be a str.'
         assert isinstance(model_type, str), 'model_type must be a str.'
         assert isinstance(index, int), 'index must be a int.'
@@ -45,13 +45,13 @@ class LSTMPlotter:
             plt.plot(validation_loss, 'b', label='Validation loss')
             plt.title(f'{model_type} Training and validation loss - {index} {params_str} ({LSTMPlotter.get_current_time()})')
             plt.legend(loc=0)
-            self.save_image(folder_path, model_type, index, params_str, plot_type)
+            LSTMPlotter.save_image(folder_path, model_type, index, params_str, plot_type)
             plt.close()
         except Exception as e:
             print(f"An error occurred when creating the {plot_type} plot: {str(e)}")
     
 
-    def plot_close_and_predictions(self, folder_path: str, model_type: str, index: int, params_str: str, df: pd.DataFrame, close_data: pd.DataFrame, train_date: pd.Series, 
+    def plot_close_and_predictions(folder_path: str, model_type: str, index: int, params_str: str, df: pd.DataFrame, close_data: pd.DataFrame, train_date: pd.Series, 
                                train_predict: np.ndarray, test_date: pd.Series, test_predict: np.ndarray) -> None:
         assert isinstance(folder_path, str), 'folder_path must be a str.'
         assert isinstance(model_type, str), 'model_type must be a str.'
@@ -80,13 +80,13 @@ class LSTMPlotter:
             plt.ylabel('Close Value')
             plt.title(f'{model_type} Close Values vs. Predictions - {index} {params_str} ({LSTMPlotter.get_current_time()})')
             plt.legend()
-            self.save_image(folder_path, model_type, index, params_str, plot_type)
+            LSTMPlotter.save_image(folder_path, model_type, index, params_str, plot_type)
             plt.close()
         except Exception as e:
             print(f"An error occurred when creating {plot_type} plot: {str(e)}")
     
 
-    def plot_future_predictions(self, folder_path: str, model_type: str, index: int, params_str: str, future_dates: pd.DatetimeIndex, predictions: np.ndarray) -> None:
+    def plot_future_predictions(folder_path: str, model_type: str, index: int, params_str: str, future_dates: pd.DatetimeIndex, predictions: np.ndarray) -> None:
         assert isinstance(folder_path, str), "folder_path must be a str."
         assert isinstance(model_type, str), "model_type must be a str."
         assert isinstance(index, int), "index must be a int."
@@ -102,13 +102,13 @@ class LSTMPlotter:
             plt.ylabel('Price')
             plt.title(f'{model_type} Future Price Predictions - {index} {params_str} ({LSTMPlotter.get_current_time()})')
             plt.legend()
-            self.save_image(folder_path, model_type, index, params_str, plot_type)
+            LSTMPlotter.save_image(folder_path, model_type, index, params_str, plot_type)
             plt.close()
         except Exception as e:
             print(f"An error occurred when creating {plot_type} plot: {str(e)}")
     
 
-    def plot_residuals(self, folder_path: str, model_type: str, index: int, params_str: str, predictions: np.ndarray, residuals: np.ndarray, residuals_percentage: np.ndarray) -> None:
+    def plot_residuals(folder_path: str, model_type: str, index: int, params_str: str, predictions: np.ndarray, residuals: np.ndarray, residuals_percentage: np.ndarray) -> None:
         assert isinstance(folder_path, str), "folder_path must be a str."
         assert isinstance(model_type, str), "model_type must be a str."
         assert isinstance(index, int), "index must be a int."
@@ -140,13 +140,13 @@ class LSTMPlotter:
             ax2.set_ylabel('Residuals Percentage', color='r')
 
             plt.title(f'{model_type} Residuals - {index} {params_str} ({LSTMPlotter.get_current_time()})')
-            self.save_image(folder_path, model_type, index, params_str, plot_type)
+            LSTMPlotter.save_image(folder_path, model_type, index, params_str, plot_type)
             plt.close()
         except Exception as e:
             print(f"An error occurred when creating {plot_type} plot: {str(e)}")
 
 
-    def save_image(self, folder_path: str, model_type: str, index: int, params_str: str, plot_type: str) -> None:
+    def save_image(folder_path: str, model_type: str, index: int, params_str: str, plot_type: str) -> None:
         assert isinstance(folder_path, str), f"folder_path must be str. You provided: {folder_path}. Type: {type(folder_path)}"
         assert isinstance(model_type, str), f"model_type must be str. You provided: {model_type}. Type: {type(model_type)}"
         assert isinstance(index, int), f"index must be int. You provided: {index}. Type: {type(index)}"

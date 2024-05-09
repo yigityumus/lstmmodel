@@ -20,7 +20,7 @@ from functions import (generate_dataset,
                        append_to_times_and_epochs,
                        determine_frequency
                        )
-from lstm_model_helper import LSTMModelHelper
+from lstm_plotter import LSTMPlotter
 from lstm_database import LSTMDatabase
 
 
