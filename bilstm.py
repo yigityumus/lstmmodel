@@ -64,10 +64,6 @@ if __name__ == '__main__':
     print(f"param_combinations: {total_combinations} different options.")
 
 
-    # LSTM MODEL
-    modelhelper = LSTMModelHelper(ticker=ticker_fullname)
-
-
     # Iterate over all parameter combinations
     for i, params in enumerate(param_combinations):
         start_time = time.time()
@@ -122,7 +118,7 @@ if __name__ == '__main__':
         history = model.fit(X_train, y_train, validation_data=(X_test, y_test),
                             epochs=epoch, batch_size=batch_size, verbose=1, callbacks=[early_stopping])
 
-        modelhelper.plot_training_validation_loss(model_type, history.history['loss'], history.history['val_loss'], params)
+        LSTMPlotter.plot_training_validation_loss(model_type, history.history['loss'], history.history['val_loss'], params)
 
         # - - - - - - - - - - - - I N F E R E N C E S   A N D   P R E D I C T I O N S - - - - - - - - - - - - - - - - - - 
 
@@ -139,7 +135,7 @@ if __name__ == '__main__':
         train_date = df['date'].iloc[time_step : time_step+len(train_predict)]
         test_date = df['date'].iloc[len(train_predict) + 2*time_step + time_step : len(train_predict) + 2*time_step + time_step + len(test_predict)]
         
-        modelhelper.plot_close_and_predictions(model_type, df, close_data, train_date, train_predict, test_date, test_predict, params)
+        LSTMPlotter.plot_close_and_predictions(model_type, df, close_data, train_date, train_predict, test_date, test_predict, params)
 
         # - - - - - - - - - - - - - - - - - - - - F U T U R E   P R E D I C T I O N S - - - - - - - - - - - - - - - - - -
         last_data = test_data_scaled[-time_step:]
@@ -158,7 +154,7 @@ if __name__ == '__main__':
         future_dates = pd.date_range(start=last_date, periods=time_step+1, freq=freq)[1:]
                 
         
-        modelhelper.plot_future_predictions(model_type, future_dates, predictions, params)
+        LSTMPlotter.plot_future_predictions(model_type, future_dates, predictions, params)
         
         # Print progress
         end_time = time.time()
