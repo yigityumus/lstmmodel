@@ -587,19 +587,25 @@ class Model:
             'end_date': end_date
         }
     
+    def get_control_data(self, params):
+        control_df = Model.load_csv(self.control_file)
+        control_df = control_df.head(params['time_step'])
+        control_df = control_df[['close']]
+        actual_values = control_df.values.reshape(-1, 1)
+        return actual_values
 
     def calculate_residuals(self, predictions: np.ndarray, params: Dict[str, Any]):
         try:
-            control_df = Model.load_csv(self.control_file)
-            control_df = control_df.head(params['time_step'])
-            control_df = control_df[['close']]
+            # control_df = Model.load_csv(self.control_file)
+            # control_df = control_df.head(params['time_step'])
+            # control_df = control_df[['close']]
 
-            if len(control_df) != len(predictions):
-                print("Error: Lengths of control_df and predictions do not match.")
-                exit(1)
+            # if len(control_df) != len(predictions):
+            #     print("Error: Lengths of control_df and predictions do not match.")
+            #     exit(1)
 
-            # Assuming control_df has only one column
-            actual_values = control_df.values.reshape(-1, 1)
+            # # Assuming control_df has only one column
+            actual_values = self.get_control_data(params)
             residuals = actual_values - predictions
 
             residuals_percentage = (residuals / actual_values) * 100
@@ -709,11 +715,13 @@ class Model:
 
             future_dates = pd.date_range(start=last_date, periods=params['time_step']+1, freq=freq)[1:]
             future_pred_path = os.path.join(self.fig_path, fig_folders[2])
-            LSTMPlotter.plot_future_predictions(future_pred_path, self.model_type, i+1, params_str, future_dates, predictions)
+            control_data = self.get_control_data(params)
+            # LSTMPlotter.plot_future_predictions(future_pred_path, self.model_type, i+1, params_str, future_dates, predictions)
+            LSTMPlotter.plot_future_predictions(future_pred_path, self.model_type, i+1, params_str, future_dates, control_data, predictions)
 
             residuals = self.calculate_residuals(predictions, params)
             residuals_path = os.path.join(self.fig_path, fig_folders[3])
-            LSTMPlotter.plot_residuals(residuals_path, self.model_type, i+1, params_str, predictions, residuals['residuals'], residuals['residuals_percentage'])
+            LSTMPlotter.plot_residuals(residuals_path, self.ticker_name, self.model_type, i+1, params_str, predictions, residuals['residuals'], residuals['residuals_percentage'])
 
             end_time = time.time()
 

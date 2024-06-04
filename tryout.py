@@ -18,6 +18,8 @@ def calculate_residuals(control_file: str, predictions: np.ndarray, time_step: i
 
         # Assuming control_df has only one column
         actual_values = control_df.values.reshape(-1, 1)
+        actual_values = [item[0] for item in actual_values]
+        
         residuals = actual_values - predictions
 
         residuals_percentage = (residuals / actual_values) * 100
@@ -48,27 +50,59 @@ if __name__ == '__main__':
     DATABASE_NAME = os.path.join('output', 'Models.db')
     conn = sqlite3.connect(DATABASE_NAME)
 
+    lstm_ids = [41, 65]
+    bilstm_ids = [40, 48, 50]
+    lstm_residuals = []
+    lstm_residuals_percentages = []
+    bilstm_residuals = []
+    bilstm_residuals_percentages = []
 
+    cursor = conn.cursor()
 
-
-    for model_type in model_types:
-        cursor = conn.cursor()
-
-        table_name = f"ETHUSDT_1h_FUTURES_{model_type}"
-        query = f'SELECT {columns_str} FROM {table_name}'
+    table_name = f"ETHUSDT_1h_FUTURES_LSTM"
+    for id in lstm_ids:
+        query = f'SELECT {columns_str} FROM {table_name} where id={id}'
 
         cursor.execute(query)
         results = cursor.fetchall()
         i = 0
 
         for row in results:
-            params_str = str(row[1:-1])
-            predictions = np.array(eval(row[2]))
-            time_step = int(row[1])
+            params_str = str(row[1:])
+            predictions = np.array(eval(row[-1]))
+            time_step = int(row[2])
             residuals = calculate_residuals(csv_path, predictions, time_step)
+            lstm_residuals.append(residuals['residuals'])
+            lstm_residuals_percentages.append(residuals['residuals_percentage'])
 
-            plotter.plot_residuals(residuals_path, model_type, i+1, params_str, predictions, residuals['residuals'], residuals['residuals_percentage'])
-            i += 1
+            # plotter.plot_residuals(residuals_path, model_type, i+1, params_str, predictions, residuals['residuals'], residuals['residuals_percentage'])
+            # i += 1
+    
+    table_name = f"ETHUSDT_1h_FUTURES_BILSTM"
+    for id in bilstm_ids:
+        query = f'SELECT {columns_str} FROM {table_name} where id={id}'
+
+        cursor.execute(query)
+        results = cursor.fetchall()
+        i = 0
+
+        for row in results:
+            params_str = str(row[1:])
+            predictions = np.array(eval(row[-1]))
+            time_step = int(row[2])
+            residuals = calculate_residuals(csv_path, predictions, time_step)
+            bilstm_residuals.append(residuals['residuals'])
+            bilstm_residuals_percentages.append(residuals['residuals_percentage'])
+
+            # plotter.plot_residuals(residuals_path, model_type, i+1, params_str, predictions, residuals['residuals'], residuals['residuals_percentage'])
+            # i += 1
+    
+
+    # print(bilstm_residuals)
+    for residual_percentages in bilstm_residuals_percentages:
+        print(np.mean((residual_percentages)))
+    for residual_percentages in lstm_residuals_percentages:
+        print(np.mean((residual_percentages)))
 
         
 
