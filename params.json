@@ -4,10 +4,17 @@
             0.75
         ],
         "time_step": [
-            24
+            6,
+            24,
+            48,
+            72,
+            168
         ],
         "neuron": [
-            50
+            10,
+            25,
+            50,
+            100
         ],
         "dropout_rate": [
             0.2
@@ -23,9 +30,11 @@
             100
         ],
         "batch_size": [
-            10
+            10,
+            25
         ],
         "activation": [
+            "relu",
             "tanh",
             "sigmoid"
         ],
@@ -33,7 +42,8 @@
             0.01
         ],
         "loss_function": [
-            "mae"
+            "mae",
+            "mse"
         ]
     },
     "data": {
@@ -41,5 +51,5 @@
         "interval": "1h",
         "data_type": "FUTURES"
     },
-    "database_name": "ModelsNew.db"
+    "database_name": "Models.db"
 }
