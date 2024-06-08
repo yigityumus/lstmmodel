@@ -1,4 +1,3 @@
-from lstm_database import LSTMDatabase
 import os
 import sqlite3
 

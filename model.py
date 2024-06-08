@@ -15,7 +15,6 @@ import json
 import time
 from keras.src.callbacks import History
 
-from functions import determine_frequency
 from lstm_plotter import LSTMPlotter
 from lstm_database import LSTMDatabase
 
@@ -62,9 +61,6 @@ class Model:
     def create_initial_folders(self):
         """
         Create initial folders for output.
-
-        Parameters:
-        - ticker_name (str): Name of the ticker.
         """
 
         self.ticker_path = os.path.join(self.output_folder, self.ticker_name)
@@ -118,6 +114,17 @@ class Model:
 
     @staticmethod
     def save_to_csv(df: pd.DataFrame, filename: str) -> str:
+        """
+        Saves a pandas DataFrame to a CSV file. If the file already exists, 
+        it creates a new file with an incremented suffix.
+
+        Parameters:
+        - df (pandas.DataFrame): The DataFrame to save to CSV.
+        - filename (str): The name of the file to save the DataFrame to.
+
+        Returns:
+        - str: The final filename where the DataFrame was saved.
+        """
         try:
             if os.path.exists(filename):
                 base, ext = os.path.splitext(filename)
@@ -129,7 +136,7 @@ class Model:
             df.to_csv(filename, index=False)
             return filename
         except Exception as e:
-            print(f"An error occured when saving dataframe to {filename} file: {str(e)}")
+            print(f"An error occurred when saving dataframe to {filename} file: {str(e)}")
     
 
     @staticmethod
@@ -153,11 +160,11 @@ class Model:
         This function loads parameters required for the model and input data from a JSON file.
         
         Returns:
-        None
+            None
         
         Raises:
-        FileNotFoundError: If the JSON file specified in self.params_json does not exist.
-        KeyError: If the required keys are not found in the loaded JSON.
+            FileNotFoundError: If the JSON file specified in self.params_json does not exist.
+            KeyError: If the required keys are not found in the loaded JSON.
         """
         # Error validation for file existence
         if not os.path.exists(self.params_json):
@@ -183,6 +190,19 @@ class Model:
 
     @staticmethod
     def load_csv(file_path: str) -> pd.DataFrame:
+        """
+        Loads a CSV file into a pandas DataFrame.
+
+        Parameters:
+        - file_path (str): The path to the CSV file to load.
+
+        Returns:
+        - pandas.DataFrame: The loaded DataFrame.
+
+        Raises:
+        - FileNotFoundError: If the file specified by file_path does not exist.
+        - Exception: For any other exceptions that occur during file loading.
+        """
         try:
             df = pd.read_csv(file_path)
             return df
@@ -593,6 +613,67 @@ class Model:
         control_df = control_df[['close']]
         actual_values = control_df.values.reshape(-1, 1)
         return actual_values
+    
+    @staticmethod
+    def determine_frequency(last_date: pd.Timestamp, interval: str) -> str:
+        """
+        Determine the frequency of timestamps based on the interval string.
+
+        Args:
+            last_date (pandas.Timestamp): timestamp of the last date of the data
+            interval (str): Interval string in the format "{x}{y}", where "x" is an integer and "y" represents the interval type.
+
+        Returns:
+            str: Frequency of timestamps.
+        """
+        try:
+            # Validate input data type
+            if not isinstance(interval, str):
+                raise TypeError("Interval must be a string.")
+            if not interval:
+                raise ValueError("Invalid interval format. It should not be empty.")
+
+            # Parse the integer part
+            x = ''
+            for char in interval:
+                if char.isdigit():
+                    x += char
+                else:
+                    break
+            assert int(x) >= 1, 'Integer part of interval should be at least 1.'
+            
+            # Parse the string part
+            y = interval[len(x):]
+
+            # Mapping of interval type to frequency string
+            interval_mapping = {
+                'mo': 'M',    # Monthly
+                'w': 'W',     # Weekly
+                'd': 'D',     # Calendar Daily  # Use `B` for business day
+                'h': 'h',     # Hourly
+                'm': 'min',   # Minutely
+                's': 's',     # Secondly
+                'ms': 'ms'    # Millisecondly
+            }
+
+            x = "" if int(x) == 1 else int(x)
+            
+            
+            if y == 'w':
+                # Get the day of the week for the last date
+                day_of_week = last_date.day_name()[:3].upper()
+                return f'{x}W-{day_of_week}'
+            elif y in interval_mapping:
+                return f"{x}{interval_mapping[y]}"
+            else:
+                raise ValueError(f"Invalid interval type: {y}")
+
+        except TypeError as te:
+            print(f"TypeError: {te}")
+        except ValueError as ve:
+            print(f"ValueError: {ve}")
+        except Exception as e:
+            print('An error occurred when determining frequency: ', e)
 
     def calculate_residuals(self, predictions: np.ndarray, params: Dict[str, Any]):
         try:
@@ -711,7 +792,7 @@ class Model:
             predictions = self.future_predicts(model, params, scaler)
 
             last_date = df['date'].iloc[-1]
-            freq = determine_frequency(last_date, self.input_params['interval'])
+            freq = Model.determine_frequency(last_date, self.input_params['interval'])
 
             future_dates = pd.date_range(start=last_date, periods=params['time_step']+1, freq=freq)[1:]
             future_pred_path = os.path.join(self.fig_path, fig_folders[2])
